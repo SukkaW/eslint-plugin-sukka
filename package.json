@@ -24,7 +24,7 @@
   "scripts": {
     "lint": "eslint --format=sukka .",
     "build": "bunchee --no-sourcemap --minify",
-    "test": "SWC_NODE_PROJECT=./tsconfig.test.json mocha --require @swc-node/register --parallel ./src/**/*.test.ts --timeout 5000",
+    "test": "SWC_NODE_PROJECT=./tsconfig.test.json mocha --require @swc-node/register ./src/**/*.test.ts --timeout 5000",
     "prerelease": "pnpm run lint && pnpm run test && pnpm run build",
     "release": "bumpp -r --all --commit \"release: %s\" --tag \"%s\""
   },
