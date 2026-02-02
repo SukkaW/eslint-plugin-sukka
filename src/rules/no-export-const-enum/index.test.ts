@@ -4,16 +4,16 @@ import { dedent } from 'ts-dedent';
 
 runTest({
   module,
-  *valid() {
-    yield 'enum E {}';
-    yield 'const enum E {}';
-  },
-  *invalid() {
-    yield {
+  valid: [
+    'enum E {}',
+    'const enum E {}'
+  ],
+  invalid: [
+    {
       code: 'export const enum E {}',
       errors: [{ messageId: 'noConstEnum' }]
-    };
-    yield {
+    },
+    {
       code: dedent`
         const enum A {
           MB = 'MiB'
@@ -21,8 +21,8 @@ runTest({
         export const A;
       `,
       errors: [{ messageId: 'noConstEnum' }]
-    };
-    yield {
+    },
+    {
       code: dedent`
         const enum A {
           MB = 'MiB'
@@ -30,6 +30,6 @@ runTest({
         export default A;
       `,
       errors: [{ messageId: 'noConstEnum' }]
-    };
-  }
+    }
+  ]
 });

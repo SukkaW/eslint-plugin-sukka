@@ -4,21 +4,21 @@ import { dedent } from 'ts-dedent';
 
 runTest({
   module,
-  *valid() {
-    yield dedent`
+  valid: [
+    dedent`
       const result = []
         .map(x => x)
         .map(x => x);
-    `;
-    yield dedent`
+    `,
+    dedent`
       const result = []
         // comment
         .map(x => x) // comment
         .map(x => x);
-    `;
-  },
-  *invalid() {
-    yield {
+    `
+  ],
+  invalid: [
+    {
       code: dedent`
         const result = []
 
@@ -36,6 +36,6 @@ runTest({
         { messageId: 'unexpectedEmptyLine' },
         { messageId: 'unexpectedEmptyLine' }
       ]
-    };
-  }
+    }
+  ]
 });

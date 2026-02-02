@@ -5,7 +5,6 @@ import type { InvalidTestCase, ValidTestCase, TestCaseError } from '@typescript-
 import type { ExportedRuleModule } from '@/utils/create-eslint-rule';
 import { after, describe, it } from 'mocha';
 import type { TSESLint } from '@typescript-eslint/utils';
-import { identity } from 'foxts/identity';
 
 RuleTester.afterAll = after;
 RuleTester.it = it;
@@ -29,29 +28,20 @@ const $tester = new RuleTester({
   }
 });
 
-type TestCaseGenerator<T, R = T> = ((cast: (input: T) => T) => Generator<R>) | (readonly R[]);
-
 interface InvalidTestCaseWithNumberFormOfErrors<TMessageIds extends string, TOptions extends readonly unknown[]> extends Omit<InvalidTestCase<TMessageIds, TOptions>, 'errors'> {
   errors: number | ReadonlyArray<TestCaseError<TMessageIds>>
 }
 
 interface RunOptions<TOptions extends readonly unknown[], TMessageIds extends string> {
   module: ExportedRuleModule<TOptions, TMessageIds>,
-  valid?: TestCaseGenerator<ValidTestCase<TOptions>, string | ValidTestCase<TOptions>>,
-  invalid?: TestCaseGenerator<InvalidTestCaseWithNumberFormOfErrors<TMessageIds, TOptions>>
+  valid: Array<string | ValidTestCase<TOptions>>,
+  invalid: Array<InvalidTestCaseWithNumberFormOfErrors<TMessageIds, TOptions>>
 }
 
 function runTest<TOptions extends readonly unknown[], TMessageIds extends string>(
   { module: mod, valid, invalid }: RunOptions<TOptions, TMessageIds>,
   extraRules?: Record<string, TSESLint.AnyRuleModule>
 ) {
-  const $valid = typeof valid === 'function'
-    ? Array.from(valid(identity))
-    : (valid ?? []);
-  const $invalid = typeof invalid === 'function'
-    ? Array.from(invalid(identity))
-    : (invalid ?? []);
-
   const tester = extraRules
     ? (() => {
       const tester = new RuleTester({
@@ -76,7 +66,7 @@ function runTest<TOptions extends readonly unknown[], TMessageIds extends string
 
   // eslint-disable-next-line sukka/type/no-force-cast-via-top-type -- mismatch between me and typescript-eslint
   tester.run(mod.name, mod as unknown as TSESLint.RuleModule<TMessageIds, TOptions>, {
-    valid: $valid.flat().map((item, index) => {
+    valid: valid.flat().map((item, index) => {
       if (typeof item === 'string') {
         return item;
       }
@@ -86,10 +76,10 @@ function runTest<TOptions extends readonly unknown[], TMessageIds extends string
         name: `${item.name || 'valid'} #${index}`
       };
     }),
-    invalid: $invalid.flat().map((item, index) => ({
+    invalid: invalid.flat().map((item, index) => ({
       ...item,
       name: `${item.name || 'invalid'} #${index}`
-    })) as any
+    })) as Array<InvalidTestCase<TMessageIds, TOptions>>
   });
 }
 
