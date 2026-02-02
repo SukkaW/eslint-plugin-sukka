@@ -5,8 +5,10 @@
     "jsx": "react-jsx",
     "module": "preserve",
     "moduleResolution": "bundler",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@test/*": ["./test/*"]
     },
     "resolveJsonModule": true,
     "declaration": true,
@@ -17,5 +19,5 @@
     "strictNullChecks": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "tools/**/*.ts"]
+  "include": ["src/**/*.ts", "test/**/*.ts", "test/**/*.tsx"]
 }

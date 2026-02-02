@@ -23,7 +23,8 @@
   },
   "scripts": {
     "lint": "eslint --format=sukka .",
-    "build": "bunchee --no-sourcemap --minify"
+    "build": "bunchee --no-sourcemap --minify",
+    "test": "SWC_NODE_PROJECT=./tsconfig.test.json mocha --require @swc-node/register --parallel ./src/**/*.test.ts --timeout 5000"
   },
   "keywords": [
     "eslint",
@@ -35,12 +36,30 @@
   ],
   "author": "SukkaW <https://skk.moe>",
   "license": "GPL-3.0-only",
+  "dependencies": {
+    "@typescript-eslint/type-utils": "^8.54.0",
+    "@typescript-eslint/types": "^8.54.0",
+    "@typescript-eslint/utils": "^8.54.0",
+    "foxts": "^5.2.1"
+  },
   "devDependencies": {
+    "@swc-node/register": "^1.11.1",
+    "@swc/core": "^1.15.11",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.10.9",
+    "@typescript-eslint/rule-tester": "^8.54.0",
     "bunchee": "^6.9.4",
     "eslint": "^9.39.2",
     "eslint-config-sukka": "^8.6.1",
     "eslint-formatter-sukka": "^8.6.1",
+    "expect": "^30.2.0",
+    "mocha": "^11.7.5",
+    "ts-dedent": "^2.2.0",
     "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "eslint": "*",
+    "typescript": "*"
   },
   "packageManager": "pnpm@10.28.2"
 }

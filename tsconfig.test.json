@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node16",
+    "inlineSourceMap": true
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}
