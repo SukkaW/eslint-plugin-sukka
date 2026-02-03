@@ -143,6 +143,7 @@ if (typeof module !== 'undefined' && module.exports) {
     default: plugin,
     createRule,
     isParserWithTypeInformation,
-    ensureParserWithTypeInformation
+    ensureParserWithTypeInformation,
+    eslint_plugin_sukka: plugin
   });
 }
