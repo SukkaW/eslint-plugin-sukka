@@ -24,7 +24,7 @@
   "scripts": {
     "lint": "eslint --format=sukka .",
     "build": "bunchee --no-sourcemap --minify",
-    "test": "SWC_NODE_PROJECT=./tsconfig.test.json SWC_NODE_INLINE_SOURCE_MAP=1 nyc mocha --require @swc-node/register ./src/**/*.test.ts --timeout 5000 --full-trace",
+    "test": "SWC_NODE_PROJECT=./tsconfig.test.json SWC_NODE_INLINE_SOURCE_MAP=1 nyc mocha -r=@swc-node/register ./src/**/*.test.ts --timeout 5000 --full-trace",
     "prerelease": "pnpm run lint && pnpm run test && pnpm run build",
     "release": "bumpp -r --all --commit \"release: %s\" --tag \"%s\""
   },
@@ -58,7 +58,7 @@
     "eslint-formatter-sukka": "^8.8.0",
     "expect": "^30.3.0",
     "mocha": "^11.7.5",
-    "nyc": "^17.1.0",
+    "nyc": "^18.0.0",
     "ts-dedent": "^2.2.0",
     "typescript": "^5.9.3"
   },
