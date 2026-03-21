@@ -6,7 +6,6 @@ import no_return_await from './rules/no-return-await';
 import no_expression_empty_lines from './rules/no-expression-empty-lines';
 import object_format from './rules/object-format';
 import prefer_single_boolean_return from './rules/prefer-single-boolean-return';
-import noAllDuplicatedBranches from './rules/no-duplicated-branches';
 import noDuplicatedBranches from './rules/no-duplicated-branches';
 import commaOrLogicalOrCase from './rules/comma-or-logical-or-case';
 import noElementOverwrite from './rules/no-element-overwrite';
@@ -32,6 +31,7 @@ import noUndefinedOptionalParameters from './rules/no-undefined-optional-paramet
 import noTryPromise from './rules/no-try-promise';
 import noUnthrownError from './rules/no-unthrown-error';
 import noUselessStringOperation from './rules/no-useless-string-operation';
+import reactFilenameExtension from './rules/react-filename-extension';
 
 const plugin = {
   configs: {
@@ -92,6 +92,17 @@ const plugin = {
         'sukka/no-useless-string-operation': 'warn',
         'sukka/only-await-thenable': 'off' // replaced by typescript-eslint await-thenable rule
       } as Linter.RulesRecord
+    },
+    recommended_react: {
+      name: 'eslint-plugin-sukka/recommended_react',
+      plugins: {
+        get sukka() {
+          return plugin;
+        }
+      },
+      rules: {
+        'sukka/react-filename-extension': ['error', { allow: 'as-needed' }]
+      } as Linter.RulesRecord
     }
   },
   rules: {
@@ -101,7 +112,7 @@ const plugin = {
     'no-expression-empty-lines': no_expression_empty_lines,
     'object-format': object_format,
     'prefer-single-boolean-return': prefer_single_boolean_return,
-    'no-all-duplicated-branches': noAllDuplicatedBranches,
+    'no-all-duplicated-branches': noDuplicatedBranches,
     'no-duplicated-branches': noDuplicatedBranches,
     'bool-param-default': boolParamDefault,
     'call-argument-line': callArgumentLine,
@@ -125,7 +136,8 @@ const plugin = {
     'no-undefined-optional-parameters': noUndefinedOptionalParameters,
     'no-try-promise': noTryPromise,
     'no-unthrown-error': noUnthrownError,
-    'no-useless-string-operation': noUselessStringOperation
+    'no-useless-string-operation': noUselessStringOperation,
+    'react-filename-extension': reactFilenameExtension
   }
 } as const;
 

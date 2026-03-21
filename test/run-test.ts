@@ -15,9 +15,9 @@ RuleTester.describeSkip = describe.skip;
 
 const $tester = new RuleTester({
   languageOptions: {
+    ecmaVersion: 'latest',
     parserOptions: {
       ecmaFeatures: { jsx: true },
-      // project: 'tsconfig.json',
       projectService: true,
       tsconfigRootDir: path.join(__dirname, 'fixtures'),
       warnOnUnsupportedTypeScriptVersion: false
@@ -40,16 +40,18 @@ interface RunOptions<TOptions extends readonly unknown[], TMessageIds extends st
 
 function runTest<TOptions extends readonly unknown[], TMessageIds extends string>(
   { module: mod, valid, invalid }: RunOptions<TOptions, TMessageIds>,
-  extraRules?: Record<string, TSESLint.AnyRuleModule>
+  extraRules?: Record<string, TSESLint.AnyRuleModule>,
+  withTypedLinting = true
 ) {
   const tester = extraRules
     ? (() => {
       const tester = new RuleTester({
         languageOptions: {
+          ecmaVersion: 'latest',
           parserOptions: {
             ecmaFeatures: { jsx: true },
-            project: 'tsconfig.json',
-            tsconfigRootDir: path.join(__dirname, '..', '..', 'tests', 'fixtures'),
+            project: withTypedLinting ? 'tsconfig.json' : undefined,
+            tsconfigRootDir: path.join(__dirname, 'fixtures'),
             warnOnUnsupportedTypeScriptVersion: false
           }
         },

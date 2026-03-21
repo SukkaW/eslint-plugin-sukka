@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@eslint-react/core':
+        specifier: ^3.0.0
+        version: 3.0.0(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)
+      '@eslint-react/shared':
+        specifier: ^3.0.0
+        version: 3.0.0(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)
       '@typescript-eslint/type-utils':
         specifier: ^8.57.1
         version: 8.57.1(eslint@10.1.0(jiti@2.6.1))(typescript@5.9.3)
