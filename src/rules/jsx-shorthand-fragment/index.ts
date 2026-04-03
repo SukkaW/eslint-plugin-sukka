@@ -1,4 +1,5 @@
 import { createRule } from '@/utils/create-eslint-rule';
+import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 
 export type MessageId = 'preferShorthandFragment';
@@ -12,7 +13,7 @@ export default createRule({
     },
     fixable: 'code',
     messages: {
-      preferShorthandFragment: "Use shorthand fragment syntax '<>...</>' instead of '<{{pattern}}>...</{{pattern}}>'.'"
+      preferShorthandFragment: 'Use shorthand fragment syntax \'<>...</>\' instead of \'<{{pattern}}>...</{{pattern}}>\'.\''
     },
     schema: []
   },
@@ -34,13 +35,13 @@ export default createRule({
     return {
       JSXOpeningElement(node) {
         const { name } = node;
-        if (name.type === 'JSXIdentifier' && name.name === 'Fragment') {
+        if (name.type === AST_NODE_TYPES.JSXIdentifier && name.name === 'Fragment') {
           reportSyntaxPreferred(node, 'Fragment');
           return;
         }
-        if (name.type !== 'JSXMemberExpression') return;
-        if (name.object.type !== 'JSXIdentifier' || name.object.name !== 'React') return;
-        if (name.property.type !== 'JSXIdentifier' || name.property.name !== 'Fragment') return;
+        if (name.type !== AST_NODE_TYPES.JSXMemberExpression) return;
+        if (name.object.type !== AST_NODE_TYPES.JSXIdentifier || name.object.name !== 'React') return;
+        if (name.property.type !== AST_NODE_TYPES.JSXIdentifier || name.property.name !== 'Fragment') return;
         reportSyntaxPreferred(node, 'React.Fragment');
       }
     };

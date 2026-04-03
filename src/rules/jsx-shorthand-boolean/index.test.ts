@@ -7,6 +7,7 @@ runTest({
     '<div disabled />',
     '<div disabled={false} />',
     '<div disabled={variable} />',
+    '<div disabled="string" />',
     '<div disabled={condition ? true : false} />'
   ],
   invalid: [

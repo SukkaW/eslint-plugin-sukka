@@ -1,4 +1,6 @@
 import { createRule } from '@/utils/create-eslint-rule';
+import { AST_NODE_TYPES } from '@typescript-eslint/types';
+import type { TSESTree } from '@typescript-eslint/types';
 
 export type MessageId = 'noDuplicateProps';
 
@@ -15,22 +17,11 @@ export default createRule({
     schema: []
   },
   create(context) {
-    function getPropName(
-      attribute: { name: { type: string, namespace?: { name: string }, name: string | { name: string } } }
-    ): string {
-      if (attribute.name.type === 'JSXNamespacedName') {
-        const ns = attribute.name.namespace as { name: string };
-        const local = attribute.name.name as { name: string };
-        return `${ns.name}:${local.name}`;
-      }
-      return attribute.name.name as string;
-    }
-
     return {
       JSXOpeningElement(node) {
         const seen = new Map<string, boolean>();
         for (const attribute of node.attributes) {
-          if (attribute.type === 'JSXSpreadAttribute') continue;
+          if (attribute.type === AST_NODE_TYPES.JSXSpreadAttribute) continue;
           const propName = getPropName(attribute);
           if (seen.has(propName)) {
             context.report({
@@ -45,3 +36,14 @@ export default createRule({
     };
   }
 });
+
+function getPropName(
+  attribute: TSESTree.JSXAttribute
+): string {
+  if (attribute.name.type === AST_NODE_TYPES.JSXNamespacedName) {
+    const ns = attribute.name.namespace as { name: string };
+    const local = attribute.name.name as { name: string };
+    return `${ns.name}:${local.name}`;
+  }
+  return attribute.name.name;
+}
