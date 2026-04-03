@@ -1,0 +1,29 @@
+import { createRule } from '@/utils/create-eslint-rule';
+
+export type MessageId = 'noExplicitSpread';
+
+export default createRule({
+  name: 'jsx-no-explicit-spread-props',
+  meta: {
+    type: 'suggestion',
+    docs: {
+      description: 'Disallow spreading object literals in JSX.'
+    },
+    messages: {
+      noExplicitSpread: "Don't spread an object literal in JSX. Write each property as a separate prop instead."
+    },
+    schema: []
+  },
+  create(context) {
+    return {
+      JSXSpreadAttribute(node) {
+        if (node.argument.type === 'ObjectExpression') {
+          context.report({
+            node,
+            messageId: 'noExplicitSpread'
+          });
+        }
+      }
+    };
+  }
+});

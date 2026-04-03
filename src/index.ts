@@ -32,6 +32,11 @@ import noTryPromise from './rules/no-try-promise';
 import noUnthrownError from './rules/no-unthrown-error';
 import noUselessStringOperation from './rules/no-useless-string-operation';
 import reactFilenameExtension from './rules/react-filename-extension';
+import jsxShorthandBoolean from './rules/jsx-shorthand-boolean';
+import jsxShorthandFragment from './rules/jsx-shorthand-fragment';
+import jsxNoDuplicateProps from './rules/jsx-no-duplicate-props';
+import jsxNoExplicitSpreadProps from './rules/jsx-no-explicit-spread-props';
+import reactNoMixingControlledAndUncontrolledProps from './rules/react-no-mixing-controlled-and-uncontrolled-props';
 
 const plugin = {
   configs: {
@@ -101,7 +106,12 @@ const plugin = {
         }
       },
       rules: {
-        'sukka/react-filename-extension': ['error', { allow: 'as-needed' }]
+        'sukka/react-filename-extension': ['error', { allow: 'as-needed' }],
+        'sukka/jsx-shorthand-boolean': 'error',
+        'sukka/jsx-shorthand-fragment': 'error',
+        'sukka/jsx-no-duplicate-props': 'error',
+        'sukka/jsx-no-explicit-spread-props': 'warn',
+        'sukka/react-no-mixing-controlled-and-uncontrolled-props': 'error'
       } as Linter.RulesRecord
     }
   },
@@ -137,7 +147,12 @@ const plugin = {
     'no-try-promise': noTryPromise,
     'no-unthrown-error': noUnthrownError,
     'no-useless-string-operation': noUselessStringOperation,
-    'react-filename-extension': reactFilenameExtension
+    'react-filename-extension': reactFilenameExtension,
+    'jsx-shorthand-boolean': jsxShorthandBoolean,
+    'jsx-shorthand-fragment': jsxShorthandFragment,
+    'jsx-no-duplicate-props': jsxNoDuplicateProps,
+    'jsx-no-explicit-spread-props': jsxNoExplicitSpreadProps,
+    'react-no-mixing-controlled-and-uncontrolled-props': reactNoMixingControlledAndUncontrolledProps
   }
 } as const;
 
