@@ -1,4 +1,5 @@
 import { createRule } from '@/utils/create-eslint-rule';
+import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 import type { TSESTree } from '@typescript-eslint/types';
 
 export type MessageId = 'noLocationAssignRelativeDestination';
@@ -9,25 +10,22 @@ const GLOBAL_PREFIXES = new Set(['window', 'globalThis']);
  * Returns true if the node represents `location`, `window.location`, or `globalThis.location`.
  */
 function isLocationNode(node: TSESTree.Node): boolean {
-  if (node.type === 'Identifier') {
+  if (node.type === AST_NODE_TYPES.Identifier) {
     return node.name === 'location';
   }
-  if (
-    node.type === 'MemberExpression'
+  return (
+    node.type === AST_NODE_TYPES.MemberExpression
     && !node.computed
-    && node.object.type === 'Identifier'
-    && GLOBAL_PREFIXES.has((node.object as TSESTree.Identifier).name)
-    && node.property.type === 'Identifier'
-    && (node.property as TSESTree.Identifier).name === 'location'
-  ) {
-    return true;
-  }
-  return false;
+    && node.object.type === AST_NODE_TYPES.Identifier
+    && GLOBAL_PREFIXES.has(node.object.name)
+    && node.property.type === AST_NODE_TYPES.Identifier
+    && node.property.name === 'location'
+  );
 }
 
 function getLocationPrefix(node: TSESTree.Node): string {
-  if (node.type === 'Identifier') {
-    return (node as TSESTree.Identifier).name;
+  if (node.type === AST_NODE_TYPES.Identifier) {
+    return node.name;
   }
   // window.location or globalThis.location
   const obj = (node as TSESTree.MemberExpression).object as TSESTree.Identifier;
@@ -35,7 +33,7 @@ function getLocationPrefix(node: TSESTree.Node): string {
 }
 
 // Matches absolute URLs: scheme: or protocol-relative //
-const ABSOLUTE_URL_RE = /^(?:[a-zA-Z][a-zA-Z0-9+\-.]*:|\/\/)/;
+const ABSOLUTE_URL_RE = /^(?:[a-z][\d+.a-z-]*:|\/\/)/i;
 
 function isRelativeUrl(value: string): boolean {
   return !ABSOLUTE_URL_RE.test(value);
@@ -46,10 +44,10 @@ function isRelativeUrl(value: string): boolean {
  * Returns null when the value cannot be statically determined.
  */
 function getStaticStringPrefix(node: TSESTree.Expression): string | null {
-  if (node.type === 'Literal' && typeof node.value === 'string') {
+  if (node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string') {
     return node.value;
   }
-  if (node.type === 'TemplateLiteral' && node.quasis.length > 0) {
+  if (node.type === AST_NODE_TYPES.TemplateLiteral && node.quasis.length > 0) {
     // cooked can be null when the template contains an invalid escape sequence
     return node.quasis[0].value.cooked ?? node.quasis[0].value.raw;
   }
@@ -79,17 +77,17 @@ export default createRule({
       CallExpression(node) {
         const { callee, arguments: args } = node;
         if (
-          callee.type !== 'MemberExpression'
+          callee.type !== AST_NODE_TYPES.MemberExpression
           || callee.computed
-          || callee.property.type !== 'Identifier'
-          || (callee.property as TSESTree.Identifier).name !== 'assign'
+          || callee.property.type !== AST_NODE_TYPES.Identifier
+          || callee.property.name !== 'assign'
           || !isLocationNode(callee.object)
         ) return;
 
         const firstArg = args[0];
-        if (!firstArg || firstArg.type === 'SpreadElement') return;
+        if (!firstArg || firstArg.type === AST_NODE_TYPES.SpreadElement) return;
 
-        const value = getStaticStringPrefix(firstArg as TSESTree.Expression);
+        const value = getStaticStringPrefix(firstArg);
         if (value !== null && isRelativeUrl(value)) {
           context.report({
             node,
@@ -105,10 +103,10 @@ export default createRule({
       AssignmentExpression(node) {
         const { left, right } = node;
         if (
-          left.type !== 'MemberExpression'
+          left.type !== AST_NODE_TYPES.MemberExpression
           || left.computed
-          || left.property.type !== 'Identifier'
-          || (left.property as TSESTree.Identifier).name !== 'href'
+          || left.property.type !== AST_NODE_TYPES.Identifier
+          || left.property.name !== 'href'
           || !isLocationNode(left.object)
         ) return;
 
