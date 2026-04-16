@@ -37,6 +37,7 @@ import jsxShorthandFragment from './rules/jsx-shorthand-fragment';
 import jsxNoDuplicateProps from './rules/jsx-no-duplicate-props';
 import jsxNoExplicitSpreadProps from './rules/jsx-no-explicit-spread-props';
 import reactNoMixingControlledAndUncontrolledProps from './rules/react-no-mixing-controlled-and-uncontrolled-props';
+import noLocationAssignRelativeDestination from './rules/no-location-assign-relative-destination';
 
 const plugin = {
   configs: {
@@ -111,7 +112,8 @@ const plugin = {
         'sukka/jsx-shorthand-fragment': 'error',
         'sukka/jsx-no-duplicate-props': 'error',
         'sukka/jsx-no-explicit-spread-props': 'warn',
-        'sukka/react-no-mixing-controlled-and-uncontrolled-props': 'error'
+        'sukka/react-no-mixing-controlled-and-uncontrolled-props': 'error',
+        'sukka/no-location-assign-relative-destination': 'error'
       } as Linter.RulesRecord
     }
   },
@@ -152,7 +154,8 @@ const plugin = {
     'jsx-shorthand-fragment': jsxShorthandFragment,
     'jsx-no-duplicate-props': jsxNoDuplicateProps,
     'jsx-no-explicit-spread-props': jsxNoExplicitSpreadProps,
-    'react-no-mixing-controlled-and-uncontrolled-props': reactNoMixingControlledAndUncontrolledProps
+    'react-no-mixing-controlled-and-uncontrolled-props': reactNoMixingControlledAndUncontrolledProps,
+    'no-location-assign-relative-destination': noLocationAssignRelativeDestination
   }
 } as const;
 
