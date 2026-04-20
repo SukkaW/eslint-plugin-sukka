@@ -1,35 +1,49 @@
 import { createRule } from '@/utils/create-eslint-rule';
-import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import type { TSESTree } from '@typescript-eslint/types';
+import { AST_NODE_TYPES } from '@typescript-eslint/types';
+import { ASTUtils, TSESLint } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/utils';
 
 export type MessageId = 'noLocationAssignRelativeDestination';
 
 const GLOBAL_PREFIXES = new Set(['window', 'globalThis']);
 
 /**
- * Returns true if the node represents `location`, `window.location`, or `globalThis.location`.
+ * If the node is `location`, `window.location`, or `globalThis.location`, returns the root
+ * identifier whose binding must resolve to a global for the pattern to apply.
+ * Returns null if the shape doesn't match.
  */
-function isLocationNode(node: TSESTree.Node): boolean {
-  if (node.type === AST_NODE_TYPES.Identifier) {
-    return node.name === 'location';
+function getLocationRootIdentifier(node: TSESTree.Node): TSESTree.Identifier | null {
+  if (node.type === AST_NODE_TYPES.Identifier && node.name === 'location') {
+    return node;
   }
-  return (
+  if (
     node.type === AST_NODE_TYPES.MemberExpression
     && !node.computed
     && node.object.type === AST_NODE_TYPES.Identifier
     && GLOBAL_PREFIXES.has(node.object.name)
     && node.property.type === AST_NODE_TYPES.Identifier
     && node.property.name === 'location'
-  );
+  ) {
+    return node.object;
+  }
+  return null;
 }
 
-function getLocationPrefix(node: TSESTree.Node): string {
-  if (node.type === AST_NODE_TYPES.Identifier) {
-    return node.name;
-  }
-  // window.location or globalThis.location
-  const obj = (node as TSESTree.MemberExpression).object as TSESTree.Identifier;
-  return `${obj.name}.location`;
+/**
+ * An identifier refers to a browser global when either:
+ *   - no scope declares it (implicit global, findVariable returns null), or
+ *   - the variable lives in the global scope AND has no user-written definitions
+ *     (i.e. it's an ESLint-known builtin, not a script-level `var` that happens to
+ *     hoist into the global scope).
+ */
+function isGlobalBinding(scope: TSESLint.Scope.Scope, identifier: TSESTree.Identifier): boolean {
+  const variable = ASTUtils.findVariable(scope, identifier);
+  if (!variable) return true;
+  return variable.scope.type === TSESLint.Scope.ScopeType.global && variable.defs.length === 0;
+}
+
+function getLocationPrefix(identifier: TSESTree.Identifier): string {
+  return identifier.name === 'location' ? 'location' : `${identifier.name}.location`;
 }
 
 // Matches absolute URLs: scheme: or protocol-relative //
@@ -81,8 +95,11 @@ export default createRule({
           || callee.computed
           || callee.property.type !== AST_NODE_TYPES.Identifier
           || callee.property.name !== 'assign'
-          || !isLocationNode(callee.object)
         ) return;
+
+        const rootIdentifier = getLocationRootIdentifier(callee.object);
+        if (!rootIdentifier) return;
+        if (!isGlobalBinding(context.sourceCode.getScope(node), rootIdentifier)) return;
 
         const firstArg = args[0];
         if (!firstArg || firstArg.type === AST_NODE_TYPES.SpreadElement) return;
@@ -92,7 +109,7 @@ export default createRule({
           context.report({
             node,
             messageId: 'noLocationAssignRelativeDestination',
-            data: { method: `${getLocationPrefix(callee.object)}.assign()` }
+            data: { method: `${getLocationPrefix(rootIdentifier)}.assign()` }
           });
         }
       },
@@ -107,15 +124,18 @@ export default createRule({
           || left.computed
           || left.property.type !== AST_NODE_TYPES.Identifier
           || left.property.name !== 'href'
-          || !isLocationNode(left.object)
         ) return;
+
+        const rootIdentifier = getLocationRootIdentifier(left.object);
+        if (!rootIdentifier) return;
+        if (!isGlobalBinding(context.sourceCode.getScope(node), rootIdentifier)) return;
 
         const value = getStaticStringPrefix(right);
         if (value !== null && isRelativeUrl(value)) {
           context.report({
             node,
             messageId: 'noLocationAssignRelativeDestination',
-            data: { method: `${getLocationPrefix(left.object)}.href` }
+            data: { method: `${getLocationPrefix(rootIdentifier)}.href` }
           });
         }
       }

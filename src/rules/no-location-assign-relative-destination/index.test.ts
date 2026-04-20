@@ -1,4 +1,5 @@
 import { runTest } from '@test/run-test';
+import { dedent } from 'ts-dedent';
 import module from '.';
 
 runTest({
@@ -35,7 +36,32 @@ runTest({
 
     // Unrelated member expressions
     'document.location.href = \'/path\'',
-    'foo.location.assign(\'/path\')'
+    'foo.location.assign(\'/path\')',
+
+    // Locally-shadowed `location` is not the browser global
+    dedent`
+      const location = { href: '' };
+      location.href = '/foo'
+    `,
+    dedent`
+      function handler(location) { location.href = '/foo';
+      location.assign('/foo') }
+    `,
+    // Locally-shadowed `window` / `globalThis`
+    dedent`
+      const window = { location: { href: '' } };
+      window.location.href = '/foo'
+    `,
+    dedent`
+      function handler(globalThis) {
+        globalThis.location.assign('/foo')
+      }
+    `,
+    // Imported `location` binding is not the browser global
+    dedent`
+      import { location } from './my-module';
+      location.href = '/foo'
+    `
   ],
   invalid: [
     // location.href = <relative>
