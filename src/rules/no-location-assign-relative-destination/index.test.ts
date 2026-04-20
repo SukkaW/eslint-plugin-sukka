@@ -38,6 +38,24 @@ runTest({
     'foo.location.href = \'/path\'',
     'foo.location.assign(\'/path\')',
 
+    dedent`
+      const url = 'https://example.com';
+      location.href = url;
+      location.assign(url);
+    `,
+
+    dedent`
+      const url = 'https://example.com/' + Math.random();
+      location.href = url;
+      location.assign(url);
+    `,
+
+    dedent`
+      const url = \`https://example.com/${Math.random()}\`;
+      location.href = url;
+      location.assign(url);
+    `,
+
     // Locally-shadowed `location` is not the browser global
     dedent`
       const location = { href: '' };
@@ -120,6 +138,36 @@ runTest({
       // eslint-disable-next-line no-template-curly-in-string -- test code contains intentional template literal syntax
       code: 'window.location.assign(`/users/${id}/profile`)',
       errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'window.location.assign()' } }]
+    },
+
+    // Hide with variable
+    {
+      code: dedent`
+        const url = '/dashboard';
+        location.href = url;
+      `,
+      errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'location.href' } }]
+    },
+    {
+      code: dedent`
+        const path = '/dashboard';
+        location.assign(path);
+      `,
+      errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'location.assign()' } }]
+    },
+    {
+      code: dedent`
+        const url = '/dashboard/' + Math.random();
+        location.href = url;
+      `,
+      errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'location.href' } }]
+    },
+    {
+      code: dedent`
+        const url = \`/dashboard/${Math.random()}\`;
+        location.href = url;
+      `,
+      errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'location.href' } }]
     }
   ]
 });

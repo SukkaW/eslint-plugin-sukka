@@ -1,6 +1,7 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree, TSESLint } from '@typescript-eslint/utils';
+import { ASTUtils, TSESLint } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
 
 export type MessageId = 'noLocationAssignRelativeDestination';
 
@@ -58,17 +59,53 @@ function isRelativeUrl(value: string): boolean {
 }
 
 /**
- * Extracts the leading static string from a Literal or TemplateLiteral node.
+ * Extracts the leading static string from a node.
+ * Uses getStringIfConstant to resolve literals and constant variable references.
+ * For template literals with expressions, falls back to the static prefix of the first quasi.
  * Returns null when the value cannot be statically determined.
  */
-function getStaticStringPrefix(node: TSESTree.Expression): string | null {
-  if (node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string') {
-    return node.value;
+function getStaticStringPrefix(node: TSESTree.Expression, sourceCode: TSESLint.SourceCode): string | null {
+  const constantValue = ASTUtils.getStringIfConstant(node, sourceCode.getScope(node));
+  if (constantValue !== null) {
+    return constantValue;
   }
+
+  // For template literals containing expressions, check only the static prefix of the first quasi
   if (node.type === AST_NODE_TYPES.TemplateLiteral && node.quasis.length > 0) {
     // cooked can be null when the template contains an invalid escape sequence
     return node.quasis[0].value.cooked ?? node.quasis[0].value.raw;
   }
+
+  // For `a + b`, extract the prefix from the left operand
+  if (
+    node.type === AST_NODE_TYPES.BinaryExpression
+    && node.operator === '+'
+  ) {
+    return getStaticStringPrefix(node.left, sourceCode);
+  }
+
+  // For identifiers, follow const variable declarations to their initializer
+  if (node.type === AST_NODE_TYPES.Identifier) {
+    const variable = ASTUtils.findVariable(sourceCode.getScope(node), node);
+    if (!variable) return null;
+    if (variable.defs.length !== 1) return null;
+
+    const def = variable.defs[0];
+    if (def.type !== TSESLint.Scope.DefinitionType.Variable) return null;
+
+    if (
+      // def.parent?.type !== AST_NODE_TYPES.VariableDeclaration
+      def.parent.kind !== 'const'
+    ) {
+      return null;
+    }
+
+    const init = def.node.init;
+    if (!init) return null;
+
+    return getStaticStringPrefix(init, sourceCode);
+  }
+
   return null;
 }
 
@@ -111,7 +148,7 @@ export default createRule({
         const firstArg = args[0];
         if (!firstArg || firstArg.type === AST_NODE_TYPES.SpreadElement) return;
 
-        const value = getStaticStringPrefix(firstArg);
+        const value = getStaticStringPrefix(firstArg, context.sourceCode);
         if (value !== null && isRelativeUrl(value)) {
           context.report({
             node,
@@ -137,7 +174,7 @@ export default createRule({
         if (!rootIdentifier) return;
         if (!isGlobalReference(scopeManager, rootIdentifier)) return;
 
-        const value = getStaticStringPrefix(right);
+        const value = getStaticStringPrefix(right, context.sourceCode);
         if (value !== null && isRelativeUrl(value)) {
           context.report({
             node,
