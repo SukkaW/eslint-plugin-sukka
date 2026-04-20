@@ -5,11 +5,13 @@
     "jsx": "preserve",
     "module": "preserve",
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@test/*": ["./test/*"]
     },
+    "types": [
+      "node"
+    ],
     "resolveJsonModule": true,
     "declaration": true,
     "outDir": "./dist",

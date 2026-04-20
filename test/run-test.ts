@@ -21,6 +21,13 @@ const $tester = new RuleTester({
       projectService: true,
       tsconfigRootDir: path.join(__dirname, 'fixtures'),
       warnOnUnsupportedTypeScriptVersion: false
+    },
+    globals: {
+      document: 'readonly',
+      window: 'readonly',
+      globalThis: 'readonly',
+      self: 'readonly',
+      location: 'readonly'
     }
   },
   linterOptions: {
@@ -53,6 +60,13 @@ function runTest<TOptions extends readonly unknown[], TMessageIds extends string
             project: withTypedLinting ? 'tsconfig.json' : undefined,
             tsconfigRootDir: path.join(__dirname, 'fixtures'),
             warnOnUnsupportedTypeScriptVersion: false
+          },
+          globals: {
+            document: 'readonly',
+            window: 'readonly',
+            globalThis: 'readonly',
+            self: 'readonly',
+            location: 'readonly'
           }
         },
         linterOptions: {

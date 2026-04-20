@@ -4,7 +4,7 @@ import type { TSESTree, TSESLint } from '@typescript-eslint/utils';
 
 export type MessageId = 'noLocationAssignRelativeDestination';
 
-const GLOBAL_PREFIXES = new Set(['window', 'globalThis']);
+const GLOBAL_PREFIXES = new Set(['window', 'globalThis', 'document', 'self']);
 
 /**
  * If the node is `location`, `window.location`, or `globalThis.location`, returns the root
@@ -28,10 +28,6 @@ function getLocationRootIdentifier(node: TSESTree.Node): TSESTree.Identifier | n
   return null;
 }
 
-function getLocationPrefix(identifier: TSESTree.Identifier): string {
-  return identifier.name === 'location' ? 'location' : `${identifier.name}.location`;
-}
-
 /**
  * Determines whether the given identifier is a reference to a global variable.
  *
@@ -42,11 +38,13 @@ function getLocationPrefix(identifier: TSESTree.Identifier): string {
  */
 function isGlobalReference(
   scopeManager: TSESLint.Scope.ScopeManager,
-  node: TSESTree.Node
+  node: TSESTree.Node | null
 ): boolean {
+  if (!node) return false;
   if (node.type !== AST_NODE_TYPES.Identifier) return false;
 
   const variable = scopeManager.scopes[0].set.get(node.name);
+
   if (!variable || variable.defs.length > 0) return false;
 
   return variable.references.some(({ identifier }) => identifier === node);
@@ -118,7 +116,7 @@ export default createRule({
           context.report({
             node,
             messageId: 'noLocationAssignRelativeDestination',
-            data: { method: `${getLocationPrefix(rootIdentifier)}.assign()` }
+            data: { method: context.sourceCode.getText(callee) + '()' }
           });
         }
       },
@@ -144,7 +142,7 @@ export default createRule({
           context.report({
             node,
             messageId: 'noLocationAssignRelativeDestination',
-            data: { method: `${getLocationPrefix(rootIdentifier)}.href` }
+            data: { method: context.sourceCode.getText(left) }
           });
         }
       }

@@ -35,7 +35,7 @@ runTest({
     'window.location.assign(computedUrl())',
 
     // Unrelated member expressions
-    'document.location.href = \'/path\'',
+    'foo.location.href = \'/path\'',
     'foo.location.assign(\'/path\')',
 
     // Locally-shadowed `location` is not the browser global
