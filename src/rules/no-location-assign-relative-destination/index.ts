@@ -1,7 +1,6 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import { ASTUtils, TSESLint } from '@typescript-eslint/utils';
-import type { TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree, TSESLint } from '@typescript-eslint/utils';
 
 export type MessageId = 'noLocationAssignRelativeDestination';
 
@@ -29,21 +28,28 @@ function getLocationRootIdentifier(node: TSESTree.Node): TSESTree.Identifier | n
   return null;
 }
 
-/**
- * An identifier refers to a browser global when either:
- *   - no scope declares it (implicit global, findVariable returns null), or
- *   - the variable lives in the global scope AND has no user-written definitions
- *     (i.e. it's an ESLint-known builtin, not a script-level `var` that happens to
- *     hoist into the global scope).
- */
-function isGlobalBinding(scope: TSESLint.Scope.Scope, identifier: TSESTree.Identifier): boolean {
-  const variable = ASTUtils.findVariable(scope, identifier);
-  if (!variable) return true;
-  return variable.scope.type === TSESLint.Scope.ScopeType.global && variable.defs.length === 0;
-}
-
 function getLocationPrefix(identifier: TSESTree.Identifier): string {
   return identifier.name === 'location' ? 'location' : `${identifier.name}.location`;
+}
+
+/**
+ * Determines whether the given identifier is a reference to a global variable.
+ *
+ * Ported from ESLint 9.29+ `sourceCode.isGlobalReference` — @typescript-eslint/utils@8
+ * does not expose the method on its `SourceCode` type yet.
+ *
+ * @see https://github.com/eslint/eslint/blob/2b252be80f362cca7be3326a6dbe958680fdfe9a/lib/languages/js/source-code/source-code.js#L730
+ */
+function isGlobalReference(
+  scopeManager: TSESLint.Scope.ScopeManager,
+  node: TSESTree.Node
+): boolean {
+  if (node.type !== AST_NODE_TYPES.Identifier) return false;
+
+  const variable = scopeManager.scopes[0].set.get(node.name);
+  if (!variable || variable.defs.length > 0) return false;
+
+  return variable.references.some(({ identifier }) => identifier === node);
 }
 
 // Matches absolute URLs: scheme: or protocol-relative //
@@ -84,6 +90,9 @@ export default createRule({
     }
   },
   create(context) {
+    const { scopeManager } = context.sourceCode;
+    if (!scopeManager) return {};
+
     return {
       // location.assign('/path')
       // window.location.assign('/path')
@@ -99,7 +108,7 @@ export default createRule({
 
         const rootIdentifier = getLocationRootIdentifier(callee.object);
         if (!rootIdentifier) return;
-        if (!isGlobalBinding(context.sourceCode.getScope(node), rootIdentifier)) return;
+        if (!isGlobalReference(scopeManager, rootIdentifier)) return;
 
         const firstArg = args[0];
         if (!firstArg || firstArg.type === AST_NODE_TYPES.SpreadElement) return;
@@ -128,7 +137,7 @@ export default createRule({
 
         const rootIdentifier = getLocationRootIdentifier(left.object);
         if (!rootIdentifier) return;
-        if (!isGlobalBinding(context.sourceCode.getScope(node), rootIdentifier)) return;
+        if (!isGlobalReference(scopeManager, rootIdentifier)) return;
 
         const value = getStaticStringPrefix(right);
         if (value !== null && isRelativeUrl(value)) {
