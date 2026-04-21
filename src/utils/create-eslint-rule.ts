@@ -62,3 +62,11 @@ export function ensureParserWithTypeInformation(
     throw new Error('see https://typescript-eslint.io/docs/linting/type-linting');
   }
 }
+
+export type SourceCodeWithScopeManager = TSESLint.SourceCode & { scopeManager: TSESLint.Scope.ScopeManager };
+
+export function isSourceCodeWithScopeManager(
+  sourceCode: TSESLint.SourceCode
+): sourceCode is SourceCodeWithScopeManager {
+  return !!sourceCode.scopeManager;
+}

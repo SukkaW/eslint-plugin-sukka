@@ -1,4 +1,5 @@
-import { createRule } from '@/utils/create-eslint-rule';
+import { createRule, isSourceCodeWithScopeManager } from '@/utils/create-eslint-rule';
+import type { SourceCodeWithScopeManager } from '@/utils/create-eslint-rule';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import { ASTUtils, TSESLint } from '@typescript-eslint/utils';
 import type { TSESTree } from '@typescript-eslint/types';
@@ -21,7 +22,10 @@ export default createRule({
     }
   },
   create(context) {
-    if (!context.sourceCode.scopeManager) return {};
+    const { sourceCode } = context;
+    if (!isSourceCodeWithScopeManager(sourceCode)) {
+      return {};
+    }
 
     return {
       // location.assign(...) / location['assign'](...)
@@ -33,18 +37,18 @@ export default createRule({
 
         const rootIdentifier = getLocationRootIdentifier(callee.object);
         if (!rootIdentifier) return;
-        if (!isGlobalReference(context.sourceCode, rootIdentifier)) return;
+        if (!isGlobalReference(sourceCode, rootIdentifier)) return;
         if (args.length < 1) return;
 
         const firstArg = args[0];
         if (firstArg.type === AST_NODE_TYPES.SpreadElement) return;
 
-        const value = getStaticStringPrefix(firstArg, context.sourceCode);
+        const value = getStaticStringPrefix(firstArg, sourceCode);
         if (value !== null && isRelativeUrl(value)) {
           context.report({
             node,
             messageId: 'noLocationAssignRelativeDestination',
-            data: { method: context.sourceCode.getText(callee) + '()' }
+            data: { method: sourceCode.getText(callee) + '()' }
           });
         }
       },
@@ -58,14 +62,14 @@ export default createRule({
 
         const rootIdentifier = getLocationRootIdentifier(left.object);
         if (!rootIdentifier) return;
-        if (!isGlobalReference(context.sourceCode, rootIdentifier)) return;
+        if (!isGlobalReference(sourceCode, rootIdentifier)) return;
 
-        const value = getStaticStringPrefix(right, context.sourceCode);
+        const value = getStaticStringPrefix(right, sourceCode);
         if (value !== null && isRelativeUrl(value)) {
           context.report({
             node,
             messageId: 'noLocationAssignRelativeDestination',
-            data: { method: context.sourceCode.getText(left) }
+            data: { method: sourceCode.getText(left) }
           });
         }
       }
@@ -121,13 +125,13 @@ function getLocationRootIdentifier(node: TSESTree.Node): TSESTree.Identifier | n
  * @see https://github.com/eslint/eslint/blob/2b252be80f362cca7be3326a6dbe958680fdfe9a/lib/languages/js/source-code/source-code.js#L730
  */
 function isGlobalReference(
-  sourceCode: TSESLint.SourceCode,
+  sourceCode: SourceCodeWithScopeManager,
   node: TSESTree.Node | null
 ): boolean {
   if (!node) return false;
   if (node.type !== AST_NODE_TYPES.Identifier) return false;
 
-  const variable = sourceCode.scopeManager!.scopes[0].set.get(node.name);
+  const variable = sourceCode.scopeManager.scopes[0].set.get(node.name);
 
   if (!variable || variable.defs.length > 0) return false;
 
