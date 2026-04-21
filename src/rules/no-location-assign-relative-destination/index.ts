@@ -30,10 +30,7 @@ export default createRule({
       // globalThis.location.assign(...) / globalThis.location['assign'](...)
       CallExpression(node) {
         const { callee, arguments: args } = node;
-        if (
-          callee.type !== AST_NODE_TYPES.MemberExpression
-          || !isPropertyNamed(callee, 'assign')
-        ) return;
+        if (!isMemberExprWithNamedProperty(callee, 'assign')) return;
 
         const rootIdentifier = getLocationRootIdentifier(callee.object);
         if (!rootIdentifier) return;
@@ -58,10 +55,7 @@ export default createRule({
       // globalThis.location.href = '/path'
       AssignmentExpression(node) {
         const { left, right } = node;
-        if (
-          left.type !== AST_NODE_TYPES.MemberExpression
-          || !isPropertyNamed(left, 'href')
-        ) return;
+        if (!isMemberExprWithNamedProperty(left, 'href')) return;
 
         const rootIdentifier = getLocationRootIdentifier(left.object);
         if (!rootIdentifier) return;
@@ -80,6 +74,23 @@ export default createRule({
   }
 });
 
+function isMemberExprWithNamedProperty(
+  expr: TSESTree.Expression,
+  name: string
+): expr is TSESTree.MemberExpression {
+  if (expr.type !== AST_NODE_TYPES.MemberExpression) return false;
+
+  return expr.computed
+    ? (
+      expr.property.type === AST_NODE_TYPES.Literal
+      && expr.property.value === name
+    )
+    : (
+      expr.property.type === AST_NODE_TYPES.Identifier
+      && expr.property.name === name
+    );
+}
+
 const GLOBAL_PREFIXES = new Set(['window', 'globalThis', 'document', 'self']);
 
 /**
@@ -93,11 +104,9 @@ function getLocationRootIdentifier(node: TSESTree.Node): TSESTree.Identifier | n
   }
   if (
     node.type === AST_NODE_TYPES.MemberExpression
-    && !node.computed
     && node.object.type === AST_NODE_TYPES.Identifier
     && GLOBAL_PREFIXES.has(node.object.name)
-    && node.property.type === AST_NODE_TYPES.Identifier
-    && node.property.name === 'location'
+    && isMemberExprWithNamedProperty(node, 'location')
   ) {
     return node.object;
   }
@@ -124,17 +133,6 @@ function isGlobalReference(
   if (!variable || variable.defs.length > 0) return false;
 
   return variable.references.some(({ identifier }) => identifier === node);
-}
-
-function isPropertyNamed(
-  memberNode: TSESTree.MemberExpression,
-  name: string
-): boolean {
-  return memberNode.computed
-    ? memberNode.property.type === AST_NODE_TYPES.Literal
-    && memberNode.property.value === name
-    : memberNode.property.type === AST_NODE_TYPES.Identifier
-      && memberNode.property.name === name;
 }
 
 // Matches absolute URLs: scheme: or protocol-relative //
