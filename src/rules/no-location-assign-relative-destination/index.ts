@@ -5,6 +5,81 @@ import type { TSESTree } from '@typescript-eslint/types';
 
 export type MessageId = 'noLocationAssignRelativeDestination';
 
+export default createRule({
+  name: 'no-location-assign-relative-destination',
+  meta: {
+    type: 'problem',
+    docs: {
+      description: 'Disallow `location.href =` and `location.assign()` for relative-URL navigation; use the framework\'s navigation API instead'
+    },
+    schema: [],
+    messages: {
+      noLocationAssignRelativeDestination:
+        'Do not use `{{method}}` to navigate to a relative destination. '
+        + 'Use your framework\'s navigation API instead '
+        + '(e.g. React Router\'s `navigate()` / `useNavigate()`, or Next.js\'s `redirect()` for during any components\' render phase / `useRouter().push() for event handlers in client components` from `next/navigation`).'
+    }
+  },
+  create(context) {
+    const { scopeManager } = context.sourceCode;
+    if (!scopeManager) return {};
+
+    return {
+      // location.assign(...) / location['assign'](...)
+      // window.location.assign(...) / window.location['assign'](...)
+      // globalThis.location.assign(...) / globalThis.location['assign'](...)
+      CallExpression(node) {
+        const { callee, arguments: args } = node;
+        if (
+          callee.type !== AST_NODE_TYPES.MemberExpression
+          || !isPropertyNamed(callee, 'assign')
+        ) return;
+
+        const rootIdentifier = getLocationRootIdentifier(callee.object);
+        if (!rootIdentifier) return;
+        if (!isGlobalReference(scopeManager, rootIdentifier)) return;
+        if (args.length < 1) return;
+
+        const firstArg = args[0];
+        if (firstArg.type === AST_NODE_TYPES.SpreadElement) return;
+
+        const value = getStaticStringPrefix(firstArg, context.sourceCode);
+        if (value !== null && isRelativeUrl(value)) {
+          context.report({
+            node,
+            messageId: 'noLocationAssignRelativeDestination',
+            data: { method: context.sourceCode.getText(callee) + '()' }
+          });
+        }
+      },
+
+      // location.href = '/path'
+      // window.location.href = '/path'
+      // globalThis.location.href = '/path'
+      AssignmentExpression(node) {
+        const { left, right } = node;
+        if (
+          left.type !== AST_NODE_TYPES.MemberExpression
+          || !isPropertyNamed(left, 'href')
+        ) return;
+
+        const rootIdentifier = getLocationRootIdentifier(left.object);
+        if (!rootIdentifier) return;
+        if (!isGlobalReference(scopeManager, rootIdentifier)) return;
+
+        const value = getStaticStringPrefix(right, context.sourceCode);
+        if (value !== null && isRelativeUrl(value)) {
+          context.report({
+            node,
+            messageId: 'noLocationAssignRelativeDestination',
+            data: { method: context.sourceCode.getText(left) }
+          });
+        }
+      }
+    };
+  }
+});
+
 const GLOBAL_PREFIXES = new Set(['window', 'globalThis', 'document', 'self']);
 
 /**
@@ -51,9 +126,19 @@ function isGlobalReference(
   return variable.references.some(({ identifier }) => identifier === node);
 }
 
+function isPropertyNamed(
+  memberNode: TSESTree.MemberExpression,
+  name: string
+): boolean {
+  return memberNode.computed
+    ? memberNode.property.type === AST_NODE_TYPES.Literal
+    && memberNode.property.value === name
+    : memberNode.property.type === AST_NODE_TYPES.Identifier
+      && memberNode.property.name === name;
+}
+
 // Matches absolute URLs: scheme: or protocol-relative //
 const ABSOLUTE_URL_RE = /^(?:[a-z][\d+.a-z-]*:|\/\/)/i;
-
 function isRelativeUrl(value: string): boolean {
   return !ABSOLUTE_URL_RE.test(value);
 }
@@ -84,105 +169,29 @@ function getStaticStringPrefix(node: TSESTree.Expression, sourceCode: TSESLint.S
     return getStaticStringPrefix(node.left, sourceCode);
   }
 
-  // For identifiers, follow const variable declarations to their initializer
+  // For identifiers, find the last write to the variable before this read site.
+  // eslint-scope pushes references in source order (depth-first traversal),
+  // so variable.references is already sorted — no explicit sort needed.
   if (node.type === AST_NODE_TYPES.Identifier) {
     const variable = ASTUtils.findVariable(sourceCode.getScope(node), node);
-    if (!variable) return null;
-    if (variable.defs.length !== 1) return null;
+    if (!variable || variable.defs.length < 1) return null;
 
-    const def = variable.defs[0];
+    const def = variable.defs[variable.defs.length - 1];
     if (def.type !== TSESLint.Scope.DefinitionType.Variable) return null;
 
-    if (
-      // def.parent?.type !== AST_NODE_TYPES.VariableDeclaration
-      def.parent.kind !== 'const'
-    ) {
-      return null;
+    const readPos = node.range[0];
+    let lastWriteExpr: TSESTree.Expression | null = def.node.init ?? null;
+
+    for (const ref of variable.references) {
+      if (ref.identifier.range[0] >= readPos) break;
+      if (ref.isWrite() && ref.writeExpr && ref.writeExpr !== def.node.init) {
+        lastWriteExpr = ref.writeExpr as TSESTree.Expression;
+      }
     }
 
-    const init = def.node.init;
-    if (!init) return null;
-
-    return getStaticStringPrefix(init, sourceCode);
+    if (!lastWriteExpr) return null;
+    return getStaticStringPrefix(lastWriteExpr, sourceCode);
   }
 
   return null;
 }
-
-export default createRule({
-  name: 'no-location-assign-relative-destination',
-  meta: {
-    type: 'problem',
-    docs: {
-      description: 'Disallow `location.href =` and `location.assign()` for relative-URL navigation; use the framework\'s navigation API instead'
-    },
-    schema: [],
-    messages: {
-      noLocationAssignRelativeDestination:
-        'Do not use `{{method}}` to navigate to a relative destination. '
-        + 'Use your framework\'s navigation API instead '
-        + '(e.g. React Router\'s `navigate()` / `useNavigate()`, or Next.js\'s `redirect()` for during any components\' render phase / `useRouter().push() for event handlers in client components` from `next/navigation`).'
-    }
-  },
-  create(context) {
-    const { scopeManager } = context.sourceCode;
-    if (!scopeManager) return {};
-
-    return {
-      // location.assign('/path')
-      // window.location.assign('/path')
-      // globalThis.location.assign('/path')
-      CallExpression(node) {
-        const { callee, arguments: args } = node;
-        if (
-          callee.type !== AST_NODE_TYPES.MemberExpression
-          || callee.computed
-          || callee.property.type !== AST_NODE_TYPES.Identifier
-          || callee.property.name !== 'assign'
-        ) return;
-
-        const rootIdentifier = getLocationRootIdentifier(callee.object);
-        if (!rootIdentifier) return;
-        if (!isGlobalReference(scopeManager, rootIdentifier)) return;
-
-        const firstArg = args[0];
-        if (!firstArg || firstArg.type === AST_NODE_TYPES.SpreadElement) return;
-
-        const value = getStaticStringPrefix(firstArg, context.sourceCode);
-        if (value !== null && isRelativeUrl(value)) {
-          context.report({
-            node,
-            messageId: 'noLocationAssignRelativeDestination',
-            data: { method: context.sourceCode.getText(callee) + '()' }
-          });
-        }
-      },
-
-      // location.href = '/path'
-      // window.location.href = '/path'
-      // globalThis.location.href = '/path'
-      AssignmentExpression(node) {
-        const { left, right } = node;
-        if (
-          left.type !== AST_NODE_TYPES.MemberExpression
-          || left.computed
-          || left.property.type !== AST_NODE_TYPES.Identifier
-          || left.property.name !== 'href'
-        ) return;
-
-        const rootIdentifier = getLocationRootIdentifier(left.object);
-        if (!rootIdentifier) return;
-        if (!isGlobalReference(scopeManager, rootIdentifier)) return;
-
-        const value = getStaticStringPrefix(right, context.sourceCode);
-        if (value !== null && isRelativeUrl(value)) {
-          context.report({
-            node,
-            messageId: 'noLocationAssignRelativeDestination',
-            data: { method: context.sourceCode.getText(left) }
-          });
-        }
-      }
-    };
-  }
-});

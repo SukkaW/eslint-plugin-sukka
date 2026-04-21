@@ -88,6 +88,10 @@ runTest({
       errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'location.href' } }]
     },
     {
+      code: 'location[\'href\'] = \'/dashboard\'',
+      errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'location[\'href\']' } }]
+    },
+    {
       code: 'window.location.href = \'/dashboard\'',
       errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'window.location.href' } }]
     },
@@ -165,6 +169,14 @@ runTest({
     {
       code: dedent`
         const url = \`/dashboard/${Math.random()}\`;
+        location.href = url;
+      `,
+      errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'location.href' } }]
+    },
+    {
+      code: dedent`
+        let url = 'https://example.com';
+        url = '/other-path';
         location.href = url;
       `,
       errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'location.href' } }]
