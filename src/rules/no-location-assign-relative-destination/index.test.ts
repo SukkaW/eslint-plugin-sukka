@@ -45,13 +45,13 @@ runTest({
     `,
 
     dedent`
-      const url = 'https://example.com/' + Math.random();
+      const url = 'https://example.com/' + someVariable;
       location.href = url;
       location.assign(url);
     `,
 
     dedent`
-      const url = \`https://example.com/${Math.random()}\`;
+      const url = \`https://example.com/\${someVariable}\`;
       location.href = url;
       location.assign(url);
     `,
@@ -161,14 +161,14 @@ runTest({
     },
     {
       code: dedent`
-        const url = '/dashboard/' + Math.random();
+        const url = '/dashboard/' + someVariable;
         location.href = url;
       `,
       errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'location.href' } }]
     },
     {
       code: dedent`
-        const url = \`/dashboard/${Math.random()}\`;
+        const url = \`/dashboard/\${someVariable}\`;
         location.href = url;
       `,
       errors: [{ messageId: 'noLocationAssignRelativeDestination', data: { method: 'location.href' } }]

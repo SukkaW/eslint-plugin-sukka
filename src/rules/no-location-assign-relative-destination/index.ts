@@ -21,8 +21,7 @@ export default createRule({
     }
   },
   create(context) {
-    const { scopeManager } = context.sourceCode;
-    if (!scopeManager) return {};
+    if (!context.sourceCode.scopeManager) return {};
 
     return {
       // location.assign(...) / location['assign'](...)
@@ -34,7 +33,7 @@ export default createRule({
 
         const rootIdentifier = getLocationRootIdentifier(callee.object);
         if (!rootIdentifier) return;
-        if (!isGlobalReference(scopeManager, rootIdentifier)) return;
+        if (!isGlobalReference(context.sourceCode, rootIdentifier)) return;
         if (args.length < 1) return;
 
         const firstArg = args[0];
@@ -59,7 +58,7 @@ export default createRule({
 
         const rootIdentifier = getLocationRootIdentifier(left.object);
         if (!rootIdentifier) return;
-        if (!isGlobalReference(scopeManager, rootIdentifier)) return;
+        if (!isGlobalReference(context.sourceCode, rootIdentifier)) return;
 
         const value = getStaticStringPrefix(right, context.sourceCode);
         if (value !== null && isRelativeUrl(value)) {
@@ -122,13 +121,13 @@ function getLocationRootIdentifier(node: TSESTree.Node): TSESTree.Identifier | n
  * @see https://github.com/eslint/eslint/blob/2b252be80f362cca7be3326a6dbe958680fdfe9a/lib/languages/js/source-code/source-code.js#L730
  */
 function isGlobalReference(
-  scopeManager: TSESLint.Scope.ScopeManager,
+  sourceCode: TSESLint.SourceCode,
   node: TSESTree.Node | null
 ): boolean {
   if (!node) return false;
   if (node.type !== AST_NODE_TYPES.Identifier) return false;
 
-  const variable = scopeManager.scopes[0].set.get(node.name);
+  const variable = sourceCode.scopeManager!.scopes[0].set.get(node.name);
 
   if (!variable || variable.defs.length > 0) return false;
 
