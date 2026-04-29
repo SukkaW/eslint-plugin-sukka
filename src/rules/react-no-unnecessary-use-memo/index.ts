@@ -81,10 +81,10 @@ function findParentNode(
   node: TSESTree.Node,
   predicate: (n: TSESTree.Node) => boolean
 ): TSESTree.Node | null {
-  let current = (node.parent as TSESTree.Node | undefined) ?? null;
+  let current = node.parent ?? null;
   while (current != null) {
     if (predicate(current)) return current;
-    current = (current.parent as TSESTree.Node | undefined) ?? null;
+    current = current.parent ?? null;
   }
   return null;
 }

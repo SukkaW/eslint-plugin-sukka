@@ -1,6 +1,7 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import type TSESLint from '@typescript-eslint/utils/ts-eslint';
+import type { XOR } from 'foxts/ts-xor';
 
 export function getVariableFromIdentifier(identifier: TSESTree.Identifier, scope: TSESLint.Scope.Scope): TSESLint.Scope.Variable | undefined {
   let variable = scope.variables.find(value => value.name === identifier.name);
@@ -36,7 +37,7 @@ const unknownValue: UnknownValue = {
   type: 'UnknownValue'
 };
 
-export type Values = AssignedValues | UnknownValue;
+export type Values = XOR<AssignedValues, UnknownValue>;
 
 export class ReachingDefinitions {
   constructor(public segment: TSESLint.CodePathSegment) {}

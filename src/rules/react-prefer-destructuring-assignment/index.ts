@@ -29,7 +29,7 @@ function isLikelyComponent(node: FunctionNode): boolean {
 
   // Arrow function assigned to uppercase variable: const App = (props) => {}
   if (parent?.type === AST_NODE_TYPES.VariableDeclarator) {
-    const id = (parent as TSESTree.VariableDeclarator).id;
+    const id = parent.id;
     if (id.type === AST_NODE_TYPES.Identifier) {
       return isUpperCaseStart(id.name);
     }

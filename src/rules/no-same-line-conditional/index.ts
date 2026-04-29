@@ -60,7 +60,7 @@ export default createRule({
           //   precedingIf as TSESTree.Node
           // ) as TSESLint.AST.Token;
           const followingIfToken = sourceCode.getFirstToken(
-            followingIf as TSESTree.Node
+            followingIf
           ) as TSESLint.AST.Token;
 
           context.report({

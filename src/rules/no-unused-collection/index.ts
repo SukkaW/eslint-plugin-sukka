@@ -143,7 +143,7 @@ function isReferenceAssigningCollection(ref: TSESLint.Scope.Reference) {
       const { expression } = declOrExprStmt;
       return (
         expression.type === AST_NODE_TYPES.AssignmentExpression
-        && isReferenceTo(ref, expression.left as TSESTree.Node)
+        && isReferenceTo(ref, expression.left)
         && isCollectionType(expression.right)
       );
     }
