@@ -24,7 +24,7 @@ export function reachingDefinitions(reachingDefinitionsMap: Map<string, Reaching
 }
 
 export class AssignedValues extends Set<string> {
-  type = 'AssignedValues' as const;
+  type = 'AssignedValues';
 }
 
 const assignedValues = (val: string) => new AssignedValues([val]);

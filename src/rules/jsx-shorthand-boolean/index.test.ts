@@ -14,12 +14,12 @@ runTest({
     {
       code: '<div disabled={true} />',
       output: '<div disabled />',
-      errors: [{ messageId: 'omitBooleanValue' as const }]
+      errors: [{ messageId: 'omitBooleanValue' }]
     },
     {
       code: '<input readOnly={true} />',
       output: '<input readOnly />',
-      errors: [{ messageId: 'omitBooleanValue' as const }]
+      errors: [{ messageId: 'omitBooleanValue' }]
     }
   ]
 });
