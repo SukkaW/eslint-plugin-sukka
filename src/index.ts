@@ -38,6 +38,9 @@ import jsxNoDuplicateProps from './rules/jsx-no-duplicate-props';
 import jsxNoExplicitSpreadProps from './rules/jsx-no-explicit-spread-props';
 import reactNoMixingControlledAndUncontrolledProps from './rules/react-no-mixing-controlled-and-uncontrolled-props';
 import noLocationAssignRelativeDestination from './rules/no-location-assign-relative-destination';
+import reactNoUnnecessaryUseCallback from './rules/react-no-unnecessary-use-callback';
+import reactNoUnnecessaryUseMemo from './rules/react-no-unnecessary-use-memo';
+import reactPreferDestructuringAssignment from './rules/react-prefer-destructuring-assignment';
 
 const plugin = {
   configs: {
@@ -113,7 +116,10 @@ const plugin = {
         'sukka/jsx-no-duplicate-props': 'error',
         'sukka/jsx-no-explicit-spread-props': 'warn',
         'sukka/react-no-mixing-controlled-and-uncontrolled-props': 'error',
-        'sukka/no-location-assign-relative-destination': 'error'
+        'sukka/no-location-assign-relative-destination': 'error',
+        'sukka/react-no-unnecessary-use-callback': 'error',
+        'sukka/react-no-unnecessary-use-memo': 'error',
+        'sukka/react-prefer-destructuring-assignment': 'warn'
       } as Linter.RulesRecord
     }
   },
@@ -155,7 +161,10 @@ const plugin = {
     'jsx-no-duplicate-props': jsxNoDuplicateProps,
     'jsx-no-explicit-spread-props': jsxNoExplicitSpreadProps,
     'react-no-mixing-controlled-and-uncontrolled-props': reactNoMixingControlledAndUncontrolledProps,
-    'no-location-assign-relative-destination': noLocationAssignRelativeDestination
+    'no-location-assign-relative-destination': noLocationAssignRelativeDestination,
+    'react-no-unnecessary-use-callback': reactNoUnnecessaryUseCallback,
+    'react-no-unnecessary-use-memo': reactNoUnnecessaryUseMemo,
+    'react-prefer-destructuring-assignment': reactPreferDestructuringAssignment
   }
 } as const;
 
