@@ -14,22 +14,22 @@ runTest({
     {
       code: '<Fragment><div /></Fragment>',
       output: '<><div /></>',
-      errors: [{ messageId: 'preferShorthandFragment' as const }]
+      errors: [{ messageId: 'preferShorthandFragment' }]
     },
     {
       code: '<React.Fragment><div /></React.Fragment>',
       output: '<><div /></>',
-      errors: [{ messageId: 'preferShorthandFragment' as const }]
+      errors: [{ messageId: 'preferShorthandFragment' }]
     },
     {
       code: '<Fragment><span /><span /></Fragment>',
       output: '<><span /><span /></>',
-      errors: [{ messageId: 'preferShorthandFragment' as const }]
+      errors: [{ messageId: 'preferShorthandFragment' }]
     },
     {
       code: '<React.Fragment><span /><span /></React.Fragment>',
       output: '<><span /><span /></>',
-      errors: [{ messageId: 'preferShorthandFragment' as const }]
+      errors: [{ messageId: 'preferShorthandFragment' }]
     }
   ]
 });

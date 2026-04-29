@@ -10,11 +10,11 @@ runTest({
   invalid: [
     {
       code: '<MyComponent {...{ foo, bar, baz }} />',
-      errors: [{ messageId: 'noExplicitSpread' as const }]
+      errors: [{ messageId: 'noExplicitSpread' }]
     },
     {
       code: '<input {...{ disabled: true, readOnly: true }} />',
-      errors: [{ messageId: 'noExplicitSpread' as const }]
+      errors: [{ messageId: 'noExplicitSpread' }]
     }
   ]
 });

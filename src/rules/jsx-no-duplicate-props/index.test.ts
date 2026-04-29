@@ -11,15 +11,15 @@ runTest({
   invalid: [
     {
       code: '<div id="a" id="b" />',
-      errors: [{ messageId: 'noDuplicateProps' as const }]
+      errors: [{ messageId: 'noDuplicateProps' }]
     },
     {
       code: '<div onClick={handleA} onClick={handleB} />',
-      errors: [{ messageId: 'noDuplicateProps' as const }]
+      errors: [{ messageId: 'noDuplicateProps' }]
     },
     {
       code: '<div id="a" className="b" id="c" />',
-      errors: [{ messageId: 'noDuplicateProps' as const }]
+      errors: [{ messageId: 'noDuplicateProps' }]
     }
   ]
 });
