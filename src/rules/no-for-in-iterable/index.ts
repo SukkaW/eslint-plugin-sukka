@@ -22,7 +22,8 @@
 import { createRule, ensureParserWithTypeInformation } from '@/utils/create-eslint-rule';
 import type ts from 'typescript';
 import { TypeFlags as tsTypeFlags } from 'typescript';
-import type { ParserServicesWithTypeInformation, TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
+import type { ParserServicesWithTypeInformation } from '@typescript-eslint/utils';
 
 export default createRule({
   name: 'no-for-in-iterable',

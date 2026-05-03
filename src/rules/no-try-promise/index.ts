@@ -20,7 +20,8 @@
 // https://sonarsource.github.io/rspec/#/rspec/S4822/javascript
 
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { ParserServicesWithTypeInformation, TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
+import type { ParserServicesWithTypeInformation } from '@typescript-eslint/utils';
 import { ensureParserWithTypeInformation, createRule } from '@/utils/create-eslint-rule';
 import { CallLikeExpressionVisitor } from './utils';
 import { SymbolFlags as tsSymbolFlags } from 'typescript';

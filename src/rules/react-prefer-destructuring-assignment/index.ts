@@ -1,6 +1,6 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
 
 export type MessageId = 'default';
 

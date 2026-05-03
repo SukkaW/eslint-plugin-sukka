@@ -1,7 +1,7 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import type { RuleContext } from '@/utils/create-eslint-rule';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
 import { TSESLint } from '@typescript-eslint/utils';
 
 export type MessageId = 'default' | 'noUnnecessaryUseCallbackInsideUseEffect';
