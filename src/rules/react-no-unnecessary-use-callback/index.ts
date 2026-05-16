@@ -1,51 +1,10 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import type { RuleContext } from '@/utils/create-eslint-rule';
+import { getAllScopeRefs, resolveToArrayExpression, isUseEffectCall, findParentNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
-import { TSESLint } from '@typescript-eslint/utils';
 
 export type MessageId = 'default' | 'noUnnecessaryUseCallbackInsideUseEffect';
-
-// --- Scope helpers ---
-
-function *getAllScopeRefs(
-  scope: TSESLint.Scope.Scope
-): Generator<TSESLint.Scope.Reference> {
-  yield *scope.references;
-  for (const child of scope.childScopes) {
-    yield *getAllScopeRefs(child);
-  }
-}
-
-function findVariableInScope(
-  scope: TSESLint.Scope.Scope,
-  name: string
-): TSESLint.Scope.Variable | null {
-  let current: TSESLint.Scope.Scope | null = scope;
-  while (current != null) {
-    const variable = current.variables.find((v) => v.name === name);
-    if (variable != null) return variable;
-    current = current.upper;
-  }
-  return null;
-}
-
-function resolveToArrayExpression(
-  context: RuleContext<string, unknown[]>,
-  node: TSESTree.Node
-): TSESTree.ArrayExpression | null {
-  if (node.type === AST_NODE_TYPES.ArrayExpression) return node;
-  if (node.type === AST_NODE_TYPES.Identifier) {
-    const scope = context.sourceCode.getScope(node);
-    const variable = findVariableInScope(scope, node.name);
-    if (variable == null) return null;
-    const def = variable.defs[0];
-    if (def?.type === TSESLint.Scope.DefinitionType.Variable && def.node.init != null) {
-      return resolveToArrayExpression(context, def.node.init);
-    }
-  }
-  return null;
-}
 
 // --- AST helpers ---
 
@@ -60,32 +19,6 @@ function isUseCallbackCall(node: TSESTree.Node): node is TSESTree.CallExpression
     return callee.property.name === 'useCallback';
   }
   return false;
-}
-
-function isUseEffectCall(node: TSESTree.Node): node is TSESTree.CallExpression {
-  if (node.type !== AST_NODE_TYPES.CallExpression) return false;
-  const { callee } = node;
-  const effectNames = new Set(['useEffect', 'useLayoutEffect', 'useInsertionEffect']);
-  if (callee.type === AST_NODE_TYPES.Identifier) return effectNames.has(callee.name);
-  if (
-    callee.type === AST_NODE_TYPES.MemberExpression
-    && callee.property.type === AST_NODE_TYPES.Identifier
-  ) {
-    return effectNames.has(callee.property.name);
-  }
-  return false;
-}
-
-function findParentNode(
-  node: TSESTree.Node,
-  predicate: (n: TSESTree.Node) => boolean
-): TSESTree.Node | null {
-  let current = node.parent ?? null;
-  while (current != null) {
-    if (predicate(current)) return current;
-    current = current.parent ?? null;
-  }
-  return null;
 }
 
 // --- Main logic ---
