@@ -41,6 +41,8 @@ import noLocationAssignRelativeDestination from './rules/no-location-assign-rela
 import reactNoUnnecessaryUseCallback from './rules/react-no-unnecessary-use-callback';
 import reactNoUnnecessaryUseMemo from './rules/react-no-unnecessary-use-memo';
 import reactPreferDestructuringAssignment from './rules/react-prefer-destructuring-assignment';
+import reactNoCircularEffect from './rules/react-no-circular-effect';
+import reactPreferStateUpdaterFunction from './rules/react-prefer-state-updater-function';
 
 const plugin = {
   configs: {
@@ -119,7 +121,9 @@ const plugin = {
         'sukka/no-location-assign-relative-destination': 'error',
         'sukka/react-no-unnecessary-use-callback': 'error',
         'sukka/react-no-unnecessary-use-memo': 'error',
-        'sukka/react-prefer-destructuring-assignment': 'warn'
+        'sukka/react-prefer-destructuring-assignment': 'warn',
+        'sukka/react-no-circular-effect': 'error',
+        'sukka/react-prefer-state-updater-function': 'error'
       } as Linter.RulesRecord
     }
   },
@@ -164,7 +168,9 @@ const plugin = {
     'no-location-assign-relative-destination': noLocationAssignRelativeDestination,
     'react-no-unnecessary-use-callback': reactNoUnnecessaryUseCallback,
     'react-no-unnecessary-use-memo': reactNoUnnecessaryUseMemo,
-    'react-prefer-destructuring-assignment': reactPreferDestructuringAssignment
+    'react-prefer-destructuring-assignment': reactPreferDestructuringAssignment,
+    'react-no-circular-effect': reactNoCircularEffect,
+    'react-prefer-state-updater-function': reactPreferStateUpdaterFunction
   }
 } as const;
 
