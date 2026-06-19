@@ -46,11 +46,11 @@ importers:
         specifier: ^10.5.0
         version: 10.5.0(jiti@2.7.0)
       eslint-config-sukka:
-        specifier: ^8.11.1
-        version: 8.11.1(@typescript-eslint/utils@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+        specifier: ^8.11.2
+        version: 8.11.2(@typescript-eslint/utils@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
       eslint-formatter-sukka:
-        specifier: ^8.11.1
-        version: 8.11.1(eslint@10.5.0(jiti@2.7.0))
+        specifier: ^8.11.2
+        version: 8.11.2(eslint@10.5.0(jiti@2.7.0))
       mocha:
         specifier: ^11.7.6
         version: 11.7.6
@@ -161,13 +161,13 @@ packages:
     resolution: {integrity: sha512-EriSTlt5OC9/7SXkRSCAhfSxxoSUgBm33OH+IkwbdpgoqsSsUg7y3uh+IICI/Qg4BBWr3U2i39RpmycbxMq4ew==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
 
-  '@eslint-sukka/eslint-plugin-stylistic@8.11.1':
-    resolution: {integrity: sha512-FLv7lN+lUvkfK1xYkkKryeo8WaYA4aIb+A3oxITBOVotzZMDYz4We9ZvtmRHUzYw0RIlay6e62rUwei54LGcTw==}
+  '@eslint-sukka/eslint-plugin-stylistic@8.11.2':
+    resolution: {integrity: sha512-EpD3JAvJq189PzxiB5IhyqyMeQLHOvVASTMyb/+IXhiv+EeOKVNjCJJvs8xjmu24u2JnhwoQBsin0WpLwXuaCg==}
     peerDependencies:
       eslint: '*'
 
-  '@eslint-sukka/eslint-plugin-sukka-full@8.11.1':
-    resolution: {integrity: sha512-KxwazKHkUngOWOZ8vZ6VGa+glK4j6WBVUV66Uzzj6SdmGd2gXGv+EjjT2J9wjvqrUjPG3VxVUp91fDrKg0WVCg==}
+  '@eslint-sukka/eslint-plugin-sukka-full@8.11.2':
+    resolution: {integrity: sha512-SxdFIfpAd+X/sM2TkJcE/NZtlEutmoKP40hhhZgVzK+Pojvb4/2e/TfNGbrxAaioqgcsVJnG4TQp7wGO/5T85Q==}
     peerDependencies:
       eslint: '*'
       typescript: '*'
@@ -175,8 +175,8 @@ packages:
       typescript:
         optional: true
 
-  '@eslint-sukka/shared@8.11.1':
-    resolution: {integrity: sha512-zfnqmb60F5Ma5T9w2l220FVdnl+kfcz+Bjk4v1X1rHoLdyYdBEKAnoR3iWzQalN7Cxx5DnOqIzil6R2w8aEAPQ==}
+  '@eslint-sukka/shared@8.11.2':
+    resolution: {integrity: sha512-q5ZMWCR9r/DtAILV9HdmI/26UTGWSzUHXprP/iNcXNDlbF9o+rggFILocEV/huHoa34W2b21vO1Tni2oaCFDxw==}
     peerDependencies:
       eslint: '*'
 
@@ -1125,6 +1125,10 @@ packages:
   emoji-regex@9.2.2:
     resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
 
+  enhanced-resolve@5.24.0:
+    resolution: {integrity: sha512-SkE2t82KlkkxQRVMVLAGKxLfORGQfrkx5dkj+vlgXRVNEdPc4eZcR+J/Fvj8C+yKSFH5L0q3NFlyufOVQnCcYQ==}
+    engines: {node: '>=10.13.0'}
+
   es-errors@1.3.0:
     resolution: {integrity: sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==}
     engines: {node: '>= 0.4'}
@@ -1140,11 +1144,11 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-config-sukka@8.11.1:
-    resolution: {integrity: sha512-qMWXmBou84bt3x7bm4SRxJHp5qdG2cyhhthKPq3KJFiT6/pVYelvVUjZwO+s2HARIQGOttQOkqIwV2maf0P6YQ==}
+  eslint-config-sukka@8.11.2:
+    resolution: {integrity: sha512-/4QNZrr5SkC8Ptf0GRUi0O/dlzXLeAgd3nhyCmhibrh93NNFGauxuc2BzCYvPyfhlx8rg9v6br0k3ZBZ/fQFRw==}
 
-  eslint-formatter-sukka@8.11.1:
-    resolution: {integrity: sha512-OLg0s9Zc0VKUyx2HbkYZGGAFZVeyP9Q9cLkvssKmkUTsYmXvO7wZcM+b0WhGFNqra05nUpFfHp29IfTv2KAEwg==}
+  eslint-formatter-sukka@8.11.2:
+    resolution: {integrity: sha512-g8UILecsooKMiGjhIfZniUN2uPw+iCfVnxNFUbCavSdvAoo1ClG/PSD2ZT4PCwAnW0TSWsYyVUEp+x/CA3fa2Q==}
     peerDependencies:
       eslint: '*'
 
@@ -1212,8 +1216,8 @@ packages:
     peerDependencies:
       eslint: '>=9.38.0'
 
-  eslint-plugin-sukka@9.5.0:
-    resolution: {integrity: sha512-G8Q2fcfMQHhyWAxf5i8/7OVCkGCa5vftYlX/hZjYy3B06YoBEHwBUevSOC8cMsYqd0tJbGW2obAJ3v5fSsmkQg==}
+  eslint-plugin-sukka@9.6.0:
+    resolution: {integrity: sha512-WovCvVzcd6qiLyDLGI/vXji/Ovu9FmJ/k+W1++ids2QDVlOB9WfDRoTusDz9D8Pw5nsd71qZzkddhAsvsjQg/g==}
     peerDependencies:
       eslint: '>=9.29.0'
       typescript: '*'
@@ -1883,6 +1887,10 @@ packages:
     resolution: {integrity: sha512-eNRKgb3z66Yp3D2CixVujOUvXLFUTij/zVnV8KRyvFdQwpz7I5DS8UfRkTeLzb64u+dkzDSdelE24izu+zSSUg==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
+  tapable@2.3.3:
+    resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
+    engines: {node: '>=6'}
+
   test-exclude@8.0.0:
     resolution: {integrity: sha512-ZOffsNrXYggvU1mDGHk54I96r26P8SyMjO5slMKSc7+IWmtB/MQKnEC2fP51imB3/pT6YK5cT5E8f+Dd9KdyOQ==}
     engines: {node: 20 || >=22}
@@ -2157,26 +2165,26 @@ snapshots:
 
   '@eslint-community/regexpp@4.12.2': {}
 
-  '@eslint-sukka/eslint-plugin-stylistic@8.11.1(eslint@10.5.0(jiti@2.7.0))':
+  '@eslint-sukka/eslint-plugin-stylistic@8.11.2(eslint@10.5.0(jiti@2.7.0))':
     dependencies:
       eslint: 10.5.0(jiti@2.7.0)
 
-  '@eslint-sukka/eslint-plugin-sukka-full@8.11.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)':
+  '@eslint-sukka/eslint-plugin-sukka-full@8.11.2(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
       eslint: 10.5.0(jiti@2.7.0)
-      eslint-plugin-sukka: 9.5.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      eslint-plugin-sukka: 9.6.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
     optionalDependencies:
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
 
-  '@eslint-sukka/shared@8.11.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)':
+  '@eslint-sukka/shared@8.11.2(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)':
     dependencies:
       '@package-json/types': 0.0.13
       '@typescript-eslint/utils': 8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      enhanced-resolve: 5.24.0
       eslint: 10.5.0(jiti@2.7.0)
       foxts: 5.5.1
-      oxc-resolver: 11.20.0
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -2963,6 +2971,11 @@ snapshots:
 
   emoji-regex@9.2.2: {}
 
+  enhanced-resolve@5.24.0:
+    dependencies:
+      graceful-fs: 4.2.11
+      tapable: 2.3.3
+
   es-errors@1.3.0: {}
 
   es6-error@4.1.1: {}
@@ -2971,13 +2984,13 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-sukka@8.11.1(@typescript-eslint/utils@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3):
+  eslint-config-sukka@8.11.2(@typescript-eslint/utils@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3):
     dependencies:
       '@antfu/install-pkg': 1.1.0
       '@eslint-community/eslint-plugin-eslint-comments': 4.7.2(eslint@10.5.0(jiti@2.7.0))
-      '@eslint-sukka/eslint-plugin-stylistic': 8.11.1(eslint@10.5.0(jiti@2.7.0))
-      '@eslint-sukka/eslint-plugin-sukka-full': 8.11.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
-      '@eslint-sukka/shared': 8.11.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      '@eslint-sukka/eslint-plugin-stylistic': 8.11.2(eslint@10.5.0(jiti@2.7.0))
+      '@eslint-sukka/eslint-plugin-sukka-full': 8.11.2(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
+      '@eslint-sukka/shared': 8.11.2(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
       '@eslint/config-helpers': 0.6.0
       '@eslint/js': 10.0.1(eslint@10.5.0(jiti@2.7.0))
       '@typescript-eslint/eslint-plugin': 8.61.1(@typescript-eslint/parser@8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3))(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
@@ -3003,7 +3016,7 @@ snapshots:
       - supports-color
       - typescript
 
-  eslint-formatter-sukka@8.11.1(eslint@10.5.0(jiti@2.7.0)):
+  eslint-formatter-sukka@8.11.2(eslint@10.5.0(jiti@2.7.0)):
     dependencies:
       ci-info: 4.4.0
       eslint: 10.5.0(jiti@2.7.0)
@@ -3087,7 +3100,7 @@ snapshots:
       regexp-ast-analysis: 0.7.1
       scslre: 0.3.0
 
-  eslint-plugin-sukka@9.5.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3):
+  eslint-plugin-sukka@9.6.0(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3):
     dependencies:
       '@typescript-eslint/types': 8.61.1
       '@typescript-eslint/utils': 8.61.1(eslint@10.5.0(jiti@2.7.0))(typescript@6.0.3)
@@ -3814,6 +3827,8 @@ snapshots:
   synckit@0.11.13:
     dependencies:
       '@pkgr/core': 0.3.6
+
+  tapable@2.3.3: {}
 
   test-exclude@8.0.0:
     dependencies:
