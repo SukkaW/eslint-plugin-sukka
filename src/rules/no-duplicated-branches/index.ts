@@ -63,11 +63,7 @@ export default createRule({
 
       for (let i = 1; i < branches.length; i++) {
         if (hasRequiredSize([branches[i]])) {
-          for (let j = 0; j < i; j++) {
-            if (compareIfBranches(branches[i], branches[j])) {
-              break;
-            }
-          }
+          findFirstDuplicateIfBranch(branches, i);
         }
       }
     }
@@ -93,18 +89,7 @@ export default createRule({
         );
 
         if (hasRequiredSize(firstClauseWithoutBreak)) {
-          for (let j = 0; j < i; j++) {
-            const secondClauseWithoutBreak = takeWithoutBreak(
-              expandSingleBlockStatement(cases[j].consequent)
-            );
-
-            if (
-              areEquivalent(firstClauseWithoutBreak, secondClauseWithoutBreak, context.sourceCode)
-            ) {
-              reportIssue(cases[i], cases[j], 'case');
-              break;
-            }
-          }
+          findFirstDuplicateSwitchCase(cases, i, firstClauseWithoutBreak);
         }
       }
     }
@@ -120,6 +105,26 @@ export default createRule({
         );
       }
       return false;
+    }
+
+    function findFirstDuplicateIfBranch(branches: TSESTree.Statement[], i: number) {
+      for (let j = 0; j < i; j++) {
+        if (compareIfBranches(branches[i], branches[j])) {
+          return;
+        }
+      }
+    }
+
+    function findFirstDuplicateSwitchCase(cases: TSESTree.SwitchCase[], i: number, firstClauseWithoutBreak: TSESTree.Statement[]) {
+      for (let j = 0; j < i; j++) {
+        const secondClauseWithoutBreak = takeWithoutBreak(
+          expandSingleBlockStatement(cases[j].consequent)
+        );
+        if (areEquivalent(firstClauseWithoutBreak, secondClauseWithoutBreak, context.sourceCode)) {
+          reportIssue(cases[i], cases[j], 'case');
+          return;
+        }
+      }
     }
 
     function compareIfBranches(a: TSESTree.Statement, b: TSESTree.Statement) {

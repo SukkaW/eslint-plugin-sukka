@@ -36,7 +36,7 @@ export function createRule<
   PluginDocs = unknown
 >({ name, meta, create, resolveOptions }: RuleModule<TResolvedOptions, TOptions, TMessageIDs, PluginDocs>): ExportedRuleModule<TOptions, TMessageIDs> {
   if (meta.docs) {
-    meta.docs.url ??= new URL(name, BASE_URL).toString();
+    meta.docs.url ??= new URL(name, BASE_URL).href;
   }
   return {
     name,

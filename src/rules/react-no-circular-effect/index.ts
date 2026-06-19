@@ -6,42 +6,58 @@ import { findVariable } from '@typescript-eslint/utils/ast-utils';
 import { isUseEffectCall, isUseStateLikeCall } from '@/utils/react-hooks';
 import { fastStringArrayJoin } from 'foxts/fast-string-array-join';
 
-/** Returns true if the node (or any of its descendants) is an Identifier whose name is in depVarNames. */
-function referencesAnyDepVar(node: TSESTree.Node, depVarNames: Set<string>): boolean {
+function collectDepVarChildren(node: TSESTree.Node, stack: TSESTree.Node[]): boolean | null {
   switch (node.type) {
     case AST_NODE_TYPES.Identifier:
-      return depVarNames.has(node.name);
+      return null;
     case AST_NODE_TYPES.BinaryExpression:
     case AST_NODE_TYPES.LogicalExpression:
     case AST_NODE_TYPES.AssignmentExpression:
-      return referencesAnyDepVar(node.left, depVarNames) || referencesAnyDepVar(node.right, depVarNames);
+      stack.push(node.left, node.right);
+      return false;
     case AST_NODE_TYPES.UnaryExpression:
     case AST_NODE_TYPES.AwaitExpression:
     case AST_NODE_TYPES.SpreadElement:
-      return referencesAnyDepVar(node.argument, depVarNames);
+      stack.push(node.argument);
+      return false;
     case AST_NODE_TYPES.TSNonNullExpression:
     case AST_NODE_TYPES.TSAsExpression:
     case AST_NODE_TYPES.TSTypeAssertion:
     case AST_NODE_TYPES.TSSatisfiesExpression:
     case AST_NODE_TYPES.TSInstantiationExpression:
-      return referencesAnyDepVar(node.expression, depVarNames);
+      stack.push(node.expression);
+      return false;
     case AST_NODE_TYPES.ConditionalExpression:
-      return referencesAnyDepVar(node.test, depVarNames)
-        || referencesAnyDepVar(node.consequent, depVarNames)
-        || referencesAnyDepVar(node.alternate, depVarNames);
+      stack.push(node.test, node.consequent, node.alternate);
+      return false;
     case AST_NODE_TYPES.MemberExpression:
-      return referencesAnyDepVar(node.object, depVarNames)
-        || (node.computed && referencesAnyDepVar(node.property, depVarNames));
+      stack.push(node.object);
+      if (node.computed) stack.push(node.property);
+      return false;
     case AST_NODE_TYPES.CallExpression:
     case AST_NODE_TYPES.NewExpression:
-      return node.arguments.some((arg) => referencesAnyDepVar(arg, depVarNames));
+      stack.push(...node.arguments);
+      return false;
     case AST_NODE_TYPES.SequenceExpression:
-      return node.expressions.some((expr) => referencesAnyDepVar(expr, depVarNames));
     case AST_NODE_TYPES.TemplateLiteral:
-      return node.expressions.some((expr) => referencesAnyDepVar(expr, depVarNames));
+      stack.push(...node.expressions);
+      return false;
     default:
       return false;
   }
+}
+
+/** Returns true if the node (or any of its descendants) is an Identifier whose name is in depVarNames. */
+function referencesAnyDepVar(root: TSESTree.Node, depVarNames: Set<string>): boolean {
+  const stack: TSESTree.Node[] = [root];
+  while (stack.length > 0) {
+    const node = stack.pop()!;
+    const result = collectDepVarChildren(node, stack);
+    if (result === null && node.type === AST_NODE_TYPES.Identifier && depVarNames.has(node.name)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
@@ -58,23 +74,33 @@ function isGuardedByDepCondition(
 ): boolean {
   let current = node.parent ?? null;
   while (current != null) {
-    if (current.range[0] < cbStart || current.range[1] > cbEnd) break;
-    switch (current.type) {
-      case AST_NODE_TYPES.IfStatement: {
-        if (referencesAnyDepVar(current.test, depVarNames)) return true;
-        break;
-      }
-      case AST_NODE_TYPES.ConditionalExpression: {
-        if (referencesAnyDepVar(current.test, depVarNames)) return true;
-        break;
-      }
-      case AST_NODE_TYPES.LogicalExpression: {
-        if (referencesAnyDepVar(current.left, depVarNames)) return true;
-        break;
-      }
-      // no default
-    }
+    if (current.range[0] < cbStart || current.range[1] > cbEnd) return false;
+    if (
+      (current.type === AST_NODE_TYPES.IfStatement || current.type === AST_NODE_TYPES.ConditionalExpression)
+      && referencesAnyDepVar(current.test, depVarNames)
+    ) return true;
+    if (
+      current.type === AST_NODE_TYPES.LogicalExpression
+      && referencesAnyDepVar(current.left, depVarNames)
+    ) return true;
     current = current.parent ?? null;
+  }
+  return false;
+}
+
+function isUnguardedSetterInCallback(
+  setterVar: Scope.Variable,
+  depVarNames: Set<string>,
+  cbStart: number,
+  cbEnd: number
+): boolean {
+  for (const ref of setterVar.references) {
+    const [refStart, refEnd] = ref.identifier.range;
+    if (refStart < cbStart || refEnd > cbEnd) {
+      // skip refs outside the callback
+    } else if (ref.identifier.parent.type === AST_NODE_TYPES.CallExpression && ref.identifier.parent.callee === ref.identifier) {
+      return !isGuardedByDepCondition(ref.identifier, depVarNames, cbStart, cbEnd);
+    }
   }
   return false;
 }
@@ -154,16 +180,8 @@ export default createRule({
           const [cbStart, cbEnd] = callback.range;
           const depVarNames = new Set(deps.map((d) => d.name));
           for (const [setterVar, stateVar] of setterToState) {
-            for (const ref of setterVar.references) {
-              const [refStart, refEnd] = ref.identifier.range;
-              if (refStart < cbStart || refEnd > cbEnd) continue;
-              const { parent } = ref.identifier;
-              if (parent?.type === AST_NODE_TYPES.CallExpression && parent.callee === ref.identifier) {
-                if (!isGuardedByDepCondition(ref.identifier, depVarNames, cbStart, cbEnd)) {
-                  targets.push(stateVar);
-                }
-                break;
-              }
+            if (isUnguardedSetterInCallback(setterVar, depVarNames, cbStart, cbEnd)) {
+              targets.push(stateVar);
             }
           }
           if (targets.length === 0) continue;

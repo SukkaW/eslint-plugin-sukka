@@ -24,24 +24,22 @@ export default createRule({
       detected: 'Detected the chaining of array methods: {{methods}}. Reaplce with `.reduce` to reduce array iterations and improve the performance.'
     }
   },
-  create(context) {
-    return {
-      MemberExpression(node) {
-        if (isArrayHigherOrderFunction(node)) {
-          const parent = node.parent as TSESTree.CallExpression;
-          if (isArrayHigherOrderFunction(parent.parent)) {
-            context.report({
-              node: parent,
-              messageId: 'detected',
-              data: {
-                methods: `arr.${(node.property as TSESTree.Identifier).name}().${(parent.parent.property as TSESTree.Identifier).name}()`
-              }
-            });
-          }
+  create: (context) => ({
+    MemberExpression(node) {
+      if (isArrayHigherOrderFunction(node)) {
+        const parent = node.parent as TSESTree.CallExpression;
+        if (isArrayHigherOrderFunction(parent.parent)) {
+          context.report({
+            node: parent,
+            messageId: 'detected',
+            data: {
+              methods: `arr.${(node.property as TSESTree.Identifier).name}().${(parent.parent.property as TSESTree.Identifier).name}()`
+            }
+          });
         }
       }
-    };
-  }
+    }
+  })
 });
 
 function isArrayHigherOrderFunction(node: TSESTree.Node): node is TSESTree.MemberExpressionNonComputedName {

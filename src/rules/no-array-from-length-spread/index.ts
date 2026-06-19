@@ -59,29 +59,27 @@ export default createRule({
     },
     schema: []
   },
-  create(context) {
-    return {
-      CallExpression(node) {
-        if (isArrayFromWithLengthArg(node)) {
+  create: (context) => ({
+    CallExpression(node) {
+      if (isArrayFromWithLengthArg(node)) {
+        context.report({
+          node,
+          messageId: 'noArrayFromLength'
+        });
+      }
+    },
+    ArrayExpression(node) {
+      for (const element of node.elements) {
+        if (
+          element?.type === AST_NODE_TYPES.SpreadElement
+          && isSpreadOfNewArray(element)
+        ) {
           context.report({
             node,
-            messageId: 'noArrayFromLength'
+            messageId: 'noSpreadNewArray'
           });
         }
-      },
-      ArrayExpression(node) {
-        for (const element of node.elements) {
-          if (
-            element?.type === AST_NODE_TYPES.SpreadElement
-            && isSpreadOfNewArray(element)
-          ) {
-            context.report({
-              node,
-              messageId: 'noSpreadNewArray'
-            });
-          }
-        }
       }
-    };
-  }
+    }
+  })
 });

@@ -30,12 +30,10 @@ export default createRule({
 
           if (got !== expected) {
             context.report({
-              fix(): RuleFix {
-                return {
-                  range: [pos, pos + got.length],
-                  text: expected
-                };
-              },
+              fix: (): RuleFix => ({
+                range: [pos, pos + got.length],
+                text: expected
+              }),
               messageId: 'unexpectedEmptyLine',
               node: node.property
             });

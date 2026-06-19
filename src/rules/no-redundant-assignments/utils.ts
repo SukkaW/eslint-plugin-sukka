@@ -19,7 +19,7 @@ export function reachingDefinitions(reachingDefinitionsMap: Map<string, Reaching
     const reachingDefs = reachingDefinitionsMap.get(current.id)!;
     const outHasChanged = reachingDefs.propagate(reachingDefinitionsMap);
     if (outHasChanged) {
-      current.nextSegments.forEach(next => worklist.push(next));
+      current.nextSegments.forEach(next => { worklist.push(next); });
     }
   }
 }
@@ -60,9 +60,7 @@ export class ReachingDefinitions {
 
   propagate(reachingDefinitionsMap: Map<string, ReachingDefinitions>) {
     this.in.clear();
-    this.segment.prevSegments.forEach(prev => {
-      this.join(reachingDefinitionsMap.get(prev.id)!.out);
-    });
+    this.segment.prevSegments.forEach(prev => this.join(reachingDefinitionsMap.get(prev.id)!.out));
     const newOut = new Map<TSESLint.Scope.Variable, Values>();
     this.references.forEach(ref => this.updateProgramState(ref, newOut));
     if (!equals(this.out, newOut)) {
@@ -87,7 +85,7 @@ export class ReachingDefinitions {
   }
 
   join(previousOut: Map<TSESLint.Scope.Variable, Values>) {
-    for (const [key, values] of previousOut.entries()) {
+    for (const [key, values] of previousOut) {
       const inValues = this.in.get(key) ?? new AssignedValues();
       if (inValues.type === 'AssignedValues' && values.type === 'AssignedValues') {
         values.forEach(val => inValues.add(val));
@@ -174,21 +172,19 @@ export class AssignmentContext {
   }
 
   add(ref: TSESLint.Scope.Reference) {
-    let parent: TSESTree.Node | undefined = ref.identifier;
-    while (parent) {
+    let parent: TSESTree.Node = ref.identifier;
+    for (;;) {
       if (this.isLhs(parent)) {
         this.lhs.add(ref);
-        break;
+        return;
       }
       if (this.isRhs(parent)) {
         this.rhs.add(ref);
-        break;
+        return;
       }
+      if (parent.parent == null) return;
       parent = parent.parent;
     }
-    // if (parent == null) {
-    //   throw new Error('failed to find assignment lhs/rhs');
-    // }
   }
 }
 
@@ -206,7 +202,7 @@ export function isSelfAssignement(ref: TSESLint.Scope.Reference) {
 export function isCompoundAssignment(writeExpr: TSESTree.Node | null | undefined) {
   if (writeExpr?.parent) {
     const node = writeExpr.parent;
-    return node?.type === AST_NODE_TYPES.AssignmentExpression && node.operator !== '=';
+    return node.type === AST_NODE_TYPES.AssignmentExpression && node.operator !== '=';
   }
   return false;
 }

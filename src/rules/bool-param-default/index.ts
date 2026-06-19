@@ -43,24 +43,22 @@ export default createRule({
         + 'Consider defining another function if providing default value is not possible.'
     }
   },
-  create(context) {
-    return {
-      'FunctionDeclaration, FunctionExpression, ArrowFunctionExpression': (node: FunctionLike) => {
-        const functionLike = node;
-        for (const param of functionLike.params) {
-          if (param.type === AST_NODE_TYPES.Identifier && isOptionalBoolean(param)) {
-            context.report({
-              messageId: 'provideDefault',
-              data: {
-                parameter: param.name
-              },
-              node: param
-            });
-          }
+  create: (context) => ({
+    'FunctionDeclaration, FunctionExpression, ArrowFunctionExpression': (node: FunctionLike) => {
+      const functionLike = node;
+      for (const param of functionLike.params) {
+        if (param.type === AST_NODE_TYPES.Identifier && isOptionalBoolean(param)) {
+          context.report({
+            messageId: 'provideDefault',
+            data: {
+              parameter: param.name
+            },
+            node: param
+          });
         }
       }
-    };
-  }
+    }
+  })
 });
 
 function isOptionalBoolean(node: TSESTree.Identifier): boolean {

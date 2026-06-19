@@ -76,22 +76,29 @@ export default createRule({
  * @returns The checking result
  */
 function isInTailCallPosition(node: TSESTree.Node) {
-  if (node.parent?.type === AST_NODE_TYPES.ArrowFunctionExpression) {
-    return true;
+  let current = node;
+  for (;;) {
+    const parent = current.parent;
+    if (parent?.type === AST_NODE_TYPES.ArrowFunctionExpression) {
+      return true;
+    }
+    if (parent?.type === AST_NODE_TYPES.ReturnStatement) {
+      return !hasErrorHandler(parent);
+    }
+    if (parent?.type === AST_NODE_TYPES.ConditionalExpression && (current === parent.consequent || current === parent.alternate)) {
+      current = parent;
+      continue;
+    }
+    if (parent?.type === AST_NODE_TYPES.LogicalExpression && current === parent.right) {
+      current = parent;
+      continue;
+    }
+    if (parent?.type === AST_NODE_TYPES.SequenceExpression && current === parent.expressions.at(-1)) {
+      current = parent;
+      continue;
+    }
+    return false;
   }
-  if (node.parent?.type === AST_NODE_TYPES.ReturnStatement) {
-    return !hasErrorHandler(node.parent);
-  }
-  if (node.parent?.type === AST_NODE_TYPES.ConditionalExpression && (node === node.parent.consequent || node === node.parent.alternate)) {
-    return isInTailCallPosition(node.parent);
-  }
-  if (node.parent?.type === AST_NODE_TYPES.LogicalExpression && node === node.parent.right) {
-    return isInTailCallPosition(node.parent);
-  }
-  if (node.parent?.type === AST_NODE_TYPES.SequenceExpression && node === node.parent.expressions.at(-1)) {
-    return isInTailCallPosition(node.parent);
-  }
-  return false;
 }
 
 /**

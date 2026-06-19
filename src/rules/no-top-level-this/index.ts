@@ -44,37 +44,35 @@ export default createRule({
     },
     fixable: 'code'
   },
-  create(context) {
-    return {
-      'MemberExpression[object.type="ThisExpression"]': (memberExpression: TSESTree.MemberExpression) => {
-        const scopeType = context.sourceCode.getScope(memberExpression).variableScope.type;
-        const isInsideClass = context.sourceCode
-          .getAncestors(memberExpression)
-          .some(
-            ancestor => ancestor.type === AST_NODE_TYPES.ClassDeclaration || ancestor.type === AST_NODE_TYPES.ClassExpression
+  create: (context) => ({
+    'MemberExpression[object.type="ThisExpression"]': (memberExpression: TSESTree.MemberExpression) => {
+      const scopeType = context.sourceCode.getScope(memberExpression).variableScope.type;
+      const isInsideClass = context.sourceCode
+        .getAncestors(memberExpression)
+        .some(
+          ancestor => ancestor.type === AST_NODE_TYPES.ClassDeclaration || ancestor.type === AST_NODE_TYPES.ClassExpression
+        );
+      if ((scopeType === TSESLint.Scope.ScopeType.global || scopeType === TSESLint.Scope.ScopeType.module) && !isInsideClass) {
+        const suggest: Array<TSESLint.SuggestionReportDescriptor<MessageIds>> = [];
+        if (!memberExpression.computed) {
+          const propertyText = context.sourceCode.getText(memberExpression.property);
+          suggest.push(
+            {
+              messageId: 'suggestRemoveThis',
+              fix: fixer => fixer.replaceText(memberExpression, propertyText)
+            },
+            {
+              messageId: 'suggestUseGlobalThis',
+              fix: fixer => fixer.replaceText(memberExpression.object, 'globalThis')
+            }
           );
-        if ((scopeType === TSESLint.Scope.ScopeType.global || scopeType === TSESLint.Scope.ScopeType.module) && !isInsideClass) {
-          const suggest: Array<TSESLint.SuggestionReportDescriptor<MessageIds>> = [];
-          if (!memberExpression.computed) {
-            const propertyText = context.sourceCode.getText(memberExpression.property);
-            suggest.push(
-              {
-                messageId: 'suggestRemoveThis',
-                fix: fixer => fixer.replaceText(memberExpression, propertyText)
-              },
-              {
-                messageId: 'suggestUseGlobalThis',
-                fix: fixer => fixer.replaceText(memberExpression.object, 'globalThis')
-              }
-            );
-          }
-          context.report({
-            messageId: 'removeThis',
-            node: memberExpression.object,
-            suggest
-          });
         }
+        context.report({
+          messageId: 'removeThis',
+          node: memberExpression.object,
+          suggest
+        });
       }
-    };
-  }
+    }
+  })
 });

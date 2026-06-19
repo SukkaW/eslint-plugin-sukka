@@ -16,18 +16,16 @@ export default createRule({
     },
     schema: []
   },
-  create(context) {
-    return {
-      JSXAttribute(node) {
-        const { value } = node;
-        if (value?.type !== AST_NODE_TYPES.JSXExpressionContainer) return;
-        if (value.expression.type !== AST_NODE_TYPES.Literal || value.expression.value !== true) return;
-        context.report({
-          node,
-          messageId: 'omitBooleanValue',
-          fix: (fixer) => fixer.removeRange([node.name.range[1], value.range[1]])
-        });
-      }
-    };
-  }
+  create: (context) => ({
+    JSXAttribute(node) {
+      const { value } = node;
+      if (value?.type !== AST_NODE_TYPES.JSXExpressionContainer) return;
+      if (value.expression.type !== AST_NODE_TYPES.Literal || value.expression.value !== true) return;
+      context.report({
+        node,
+        messageId: 'omitBooleanValue',
+        fix: (fixer) => fixer.removeRange([node.name.range[1], value.range[1]])
+      });
+    }
+  })
 });

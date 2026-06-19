@@ -124,7 +124,8 @@ export default createRule({
           ) {
             if (!eq(expressionTokens[expressionIndex], valueTokens[valueIndex])) {
               break;
-            } else if (valueIndex === valueTokens.length - 1) {
+            }
+            if (valueIndex === valueTokens.length - 1) {
               return true;
             }
           }

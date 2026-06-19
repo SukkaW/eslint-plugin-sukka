@@ -15,16 +15,14 @@ export default createRule({
     },
     schema: []
   },
-  create(context) {
-    return {
-      JSXSpreadAttribute(node) {
-        if (node.argument.type === AST_NODE_TYPES.ObjectExpression) {
-          context.report({
-            node,
-            messageId: 'noExplicitSpread'
-          });
-        }
+  create: (context) => ({
+    JSXSpreadAttribute(node) {
+      if (node.argument.type === AST_NODE_TYPES.ObjectExpression) {
+        context.report({
+          node,
+          messageId: 'noExplicitSpread'
+        });
       }
-    };
-  }
+    }
+  })
 });

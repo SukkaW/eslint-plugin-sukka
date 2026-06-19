@@ -79,12 +79,10 @@ export default createRule<Options, [Options], MessageIds>({
 
           if (expectMultiline && gotSingleLine) {
             context.report({
-              fix(): RuleFix {
-                return {
-                  range: node.range,
-                  text: `{${eol}${texts.join(commaEol)}${eol}}`
-                };
-              },
+              fix: (): RuleFix => ({
+                range: node.range,
+                text: `{${eol}${texts.join(commaEol)}${eol}}`
+              }),
               messageId: 'preferMultiline',
               node
             });
@@ -96,12 +94,10 @@ export default createRule<Options, [Options], MessageIds>({
             && predictedLength() <= maxLineLength
           ) {
             context.report({
-              fix(): RuleFix {
-                return {
-                  range: node.range,
-                  text: `{${texts.join(comma)}}`
-                };
-              },
+              fix: (): RuleFix => ({
+                range: node.range,
+                text: `{${texts.join(comma)}}`
+              }),
               messageId: 'preferSingleLine',
               node
             });
@@ -117,7 +113,7 @@ export default createRule<Options, [Options], MessageIds>({
           const brackets = 4;
 
           const tail = getText(node.range[1])
-            .split(/\r\n|\n/u)[0]
+            .split(/\r\n|\n/u, 1)[0]
             // eslint-disable-next-line regexp/optimal-quantifier-concatenation -- Wait for https://github.com/ota-meshi/eslint-plugin-regexp/issues/451
             .replace(/^((?: as const)?\S*).*/u, '$1')
             .length;

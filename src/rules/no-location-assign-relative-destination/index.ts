@@ -150,49 +150,56 @@ function isRelativeUrl(value: string): boolean {
  * For template literals with expressions, falls back to the static prefix of the first quasi.
  * Returns null when the value cannot be statically determined.
  */
+function findLastWriteExprBefore(
+  variable: TSESLint.Scope.Variable,
+  def: TSESLint.Scope.Definition,
+  readPos: number
+): TSESTree.Expression | null {
+  let lastWriteExpr: TSESTree.Expression | null = def.node.init ?? null;
+  for (const ref of variable.references) {
+    if (ref.identifier.range[0] >= readPos) return lastWriteExpr;
+    if (ref.isWrite() && ref.writeExpr && ref.writeExpr !== def.node.init) {
+      lastWriteExpr = ref.writeExpr as TSESTree.Expression;
+    }
+  }
+  return lastWriteExpr;
+}
+
 function getStaticStringPrefix(node: TSESTree.Expression, sourceCode: TSESLint.SourceCode): string | null {
-  const constantValue = ASTUtils.getStringIfConstant(node, sourceCode.getScope(node));
-  if (constantValue !== null) {
-    return constantValue;
-  }
-
-  // For template literals containing expressions, check only the static prefix of the first quasi
-  if (node.type === AST_NODE_TYPES.TemplateLiteral && node.quasis.length > 0) {
-    // cooked can be null when the template contains an invalid escape sequence
-    return node.quasis[0].value.cooked ?? node.quasis[0].value.raw;
-  }
-
-  // For `a + b`, extract the prefix from the left operand
-  if (
-    node.type === AST_NODE_TYPES.BinaryExpression
-    && node.operator === '+'
-  ) {
-    return getStaticStringPrefix(node.left, sourceCode);
-  }
-
-  // For identifiers, find the last write to the variable before this read site.
-  // eslint-scope pushes references in source order (depth-first traversal),
-  // so variable.references is already sorted — no explicit sort needed.
-  if (node.type === AST_NODE_TYPES.Identifier) {
-    const variable = ASTUtils.findVariable(sourceCode.getScope(node), node);
-    if (!variable || variable.defs.length < 1) return null;
-
-    const def = variable.defs[variable.defs.length - 1];
-    if (def.type !== TSESLint.Scope.DefinitionType.Variable) return null;
-
-    const readPos = node.range[0];
-    let lastWriteExpr: TSESTree.Expression | null = def.node.init ?? null;
-
-    for (const ref of variable.references) {
-      if (ref.identifier.range[0] >= readPos) break;
-      if (ref.isWrite() && ref.writeExpr && ref.writeExpr !== def.node.init) {
-        lastWriteExpr = ref.writeExpr as TSESTree.Expression;
-      }
+  let current: TSESTree.Expression = node;
+  for (;;) {
+    const constantValue = ASTUtils.getStringIfConstant(current, sourceCode.getScope(current));
+    if (constantValue !== null) {
+      return constantValue;
     }
 
-    if (!lastWriteExpr) return null;
-    return getStaticStringPrefix(lastWriteExpr, sourceCode);
-  }
+    if (current.type === AST_NODE_TYPES.TemplateLiteral && current.quasis.length > 0) {
+      return current.quasis[0].value.cooked ?? current.quasis[0].value.raw;
+    }
 
-  return null;
+    if (
+      current.type === AST_NODE_TYPES.BinaryExpression
+      && current.operator === '+'
+    ) {
+      current = current.left;
+      continue;
+    }
+
+    if (current.type === AST_NODE_TYPES.Identifier) {
+      const variable = ASTUtils.findVariable(sourceCode.getScope(current), current);
+      if (!variable || variable.defs.length < 1) return null;
+
+      const def = variable.defs[variable.defs.length - 1];
+      if (def.type !== TSESLint.Scope.DefinitionType.Variable) return null;
+
+      const readPos = current.range[0];
+      const lastWriteExpr = findLastWriteExprBefore(variable, def, readPos);
+
+      if (!lastWriteExpr) return null;
+      current = lastWriteExpr;
+      continue;
+    }
+
+    return null;
+  }
 }

@@ -99,7 +99,7 @@ export default createRule({
         if (functionContextStack.length) {
           const currentContext = functionContextStack[functionContextStack.length - 1];
           const returnStatement = node as TSESTree.ReturnStatement;
-          currentContext.containsReturnWithoutValue = currentContext.containsReturnWithoutValue || !returnStatement.argument;
+          currentContext.containsReturnWithoutValue ||= !returnStatement.argument;
           currentContext.returnStatements.push(returnStatement);
         }
       },
@@ -213,22 +213,25 @@ function isMemberExpressionReference(
 }
 
 function getLiteralValue(returnedValue: TSESTree.Node | null, scope: TSESLint.Scope.Scope): LiteralValue | undefined {
-  if (!returnedValue) return;
-
-  if (returnedValue.type === AST_NODE_TYPES.Literal) {
-    return returnedValue.value;
-  }
-  if (returnedValue.type === AST_NODE_TYPES.UnaryExpression) {
-    const innerReturnedValue = getLiteralValue(returnedValue.argument, scope);
-    return innerReturnedValue === undefined
-      ? undefined
-      : evaluateUnaryLiteralExpression(returnedValue.operator, innerReturnedValue);
-  }
-  if (returnedValue.type === AST_NODE_TYPES.Identifier) {
-    const singleWriteVariable = getSingleWriteDefinition(returnedValue.name, scope);
-    if (singleWriteVariable?.initExpression) {
-      return getLiteralValue(singleWriteVariable.initExpression, scope);
+  let current = returnedValue;
+  while (current) {
+    if (current.type === AST_NODE_TYPES.Literal) {
+      return current.value;
     }
+    if (current.type === AST_NODE_TYPES.UnaryExpression) {
+      const innerReturnedValue = getLiteralValue(current.argument, scope);
+      return innerReturnedValue === undefined
+        ? undefined
+        : evaluateUnaryLiteralExpression(current.operator, innerReturnedValue);
+    }
+    if (current.type === AST_NODE_TYPES.Identifier) {
+      const singleWriteVariable = getSingleWriteDefinition(current.name, scope);
+      if (singleWriteVariable?.initExpression) {
+        current = singleWriteVariable.initExpression;
+        continue;
+      }
+    }
+    return undefined;
   }
   return undefined;
 }

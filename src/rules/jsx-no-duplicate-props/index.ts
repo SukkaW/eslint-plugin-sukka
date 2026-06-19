@@ -16,25 +16,23 @@ export default createRule({
     },
     schema: []
   },
-  create(context) {
-    return {
-      JSXOpeningElement(node) {
-        const seen = new Map<string, boolean>();
-        for (const attribute of node.attributes) {
-          if (attribute.type === AST_NODE_TYPES.JSXSpreadAttribute) continue;
-          const propName = getPropName(attribute);
-          if (seen.has(propName)) {
-            context.report({
-              node: attribute,
-              messageId: 'noDuplicateProps',
-              data: { propName }
-            });
-          }
-          seen.set(propName, true);
+  create: (context) => ({
+    JSXOpeningElement(node) {
+      const seen = new Map<string, boolean>();
+      for (const attribute of node.attributes) {
+        if (attribute.type === AST_NODE_TYPES.JSXSpreadAttribute) continue;
+        const propName = getPropName(attribute);
+        if (seen.has(propName)) {
+          context.report({
+            node: attribute,
+            messageId: 'noDuplicateProps',
+            data: { propName }
+          });
         }
+        seen.set(propName, true);
       }
-    };
-  }
+    }
+  })
 });
 
 function getPropName(

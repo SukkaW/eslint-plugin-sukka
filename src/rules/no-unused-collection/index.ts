@@ -60,21 +60,19 @@ export default createRule({
       requiresTypeChecking: false
     }
   },
-  create(context) {
-    return {
-      'Program:exit': (node) => {
-        const unusedArrays: TSESLint.Scope.Variable[] = [];
-        collectUnusedCollections(context.sourceCode.getScope(node), unusedArrays);
+  create: (context) => ({
+    'Program:exit': (node) => {
+      const unusedArrays: TSESLint.Scope.Variable[] = [];
+      collectUnusedCollections(context.sourceCode.getScope(node), unusedArrays);
 
-        unusedArrays.forEach(unusedArray => {
-          context.report({
-            messageId: 'unusedCollection',
-            node: unusedArray.identifiers[0]
-          });
+      unusedArrays.forEach(unusedArray => {
+        context.report({
+          messageId: 'unusedCollection',
+          node: unusedArray.identifiers[0]
         });
-      }
-    };
-  }
+      });
+    }
+  })
 });
 
 function collectUnusedCollections(scope: TSESLint.Scope.Scope, unusedArray: TSESLint.Scope.Variable[]) {

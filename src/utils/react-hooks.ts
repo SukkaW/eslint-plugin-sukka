@@ -8,9 +8,13 @@ import { TSESLint, ASTUtils } from '@typescript-eslint/utils';
 export function *getAllScopeRefs(
   scope: TSESLint.Scope.Scope
 ): Generator<TSESLint.Scope.Reference> {
-  yield *scope.references;
-  for (const child of scope.childScopes) {
-    yield *getAllScopeRefs(child);
+  const stack: TSESLint.Scope.Scope[] = [scope];
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    yield *current.references;
+    for (let i = current.childScopes.length - 1; i >= 0; i--) {
+      stack.push(current.childScopes[i]);
+    }
   }
 }
 
@@ -19,16 +23,22 @@ export function resolveToArrayExpression(
   node: TSESTree.Node
 ): TSESTree.ArrayExpression | null {
   if (node.type === AST_NODE_TYPES.ArrayExpression) return node;
-  if (node.type === AST_NODE_TYPES.Identifier) {
-    const scope = context.sourceCode.getScope(node);
-    const variable = ASTUtils.findVariable(scope, node.name);
+  if (node.type !== AST_NODE_TYPES.Identifier) return null;
+
+  let current: TSESTree.Identifier = node;
+  for (;;) {
+    const scope = context.sourceCode.getScope(current);
+    const variable = ASTUtils.findVariable(scope, current.name);
     if (variable == null) return null;
     const def = variable.defs[0];
-    if (def?.type === TSESLint.Scope.DefinitionType.Variable && def.node.init != null) {
-      return resolveToArrayExpression(context, def.node.init);
+    if (def.type !== TSESLint.Scope.DefinitionType.Variable || def.node.init == null) return null;
+    if (def.node.init.type === AST_NODE_TYPES.ArrayExpression) return def.node.init;
+    if (def.node.init.type === AST_NODE_TYPES.Identifier) {
+      current = def.node.init;
+      continue;
     }
+    return null;
   }
-  return null;
 }
 
 // --- AST helpers ---

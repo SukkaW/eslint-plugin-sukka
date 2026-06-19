@@ -72,7 +72,7 @@ export default createRule({
         if (!isUseCallbackCall(init)) return;
 
         const callNode = init;
-        const [arg0, arg1] = callNode.arguments;
+        const [arg0, arg1] = callNode.arguments as [TSESTree.CallExpressionArgument | undefined, TSESTree.CallExpressionArgument | undefined];
         if (!arg0 || !arg1) return;
 
         const varName =

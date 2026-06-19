@@ -73,6 +73,7 @@ function isFunctionType(node: TSESTree.Node, services: Partial<ParserServices> |
   ensureParserWithTypeInformation(services);
   const type = services.program.getTypeChecker().getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(node));
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- type.symbol can be undefined at runtime despite TS types
   return !!type.symbol && (type.symbol.flags & tsSymbolFlags.Function) !== 0;
 }
 

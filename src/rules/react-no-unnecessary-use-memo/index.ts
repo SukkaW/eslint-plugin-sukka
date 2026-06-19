@@ -100,8 +100,8 @@ export default createRule({
         if (!isUseMemoCall(init)) return;
 
         const callNode = init;
+        if (callNode.arguments.length < 2) return;
         const [arg0, arg1] = callNode.arguments;
-        if (!arg0 || !arg1) return;
 
         const varName =
           id.type === AST_NODE_TYPES.Identifier ? id.name : '[unknown]';

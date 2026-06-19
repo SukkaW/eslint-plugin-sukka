@@ -133,7 +133,8 @@ const collectionTypes = new Set([
 
 function isCollection(type: ts.Type) {
   return (
-    type.symbol
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- type.symbol can be undefined at runtime despite TS types
+    !!type.symbol
     && collectionTypes.has(type.symbol.name)
   );
 }

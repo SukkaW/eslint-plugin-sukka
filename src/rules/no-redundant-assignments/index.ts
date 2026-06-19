@@ -230,21 +230,19 @@ export default createRule({
       node: TSESTree.Identifier,
       scope: TSESLint.Scope.Scope | null
     ): { ref: TSESLint.Scope.Reference | null, variable: TSESLint.Scope.Variable | null } {
-      if (scope === null) {
-        return { ref: null, variable: null };
+      let current = scope;
+      while (current !== null) {
+        const ref = current.references.find(r => r.identifier === node);
+        if (ref) {
+          return { ref, variable: ref.resolved };
+        }
+        const variable = current.variables.find(v => v.defs.find(def => def.name === node));
+        if (variable) {
+          return { ref: null, variable };
+        }
+        current = current.upper;
       }
-      const ref = scope.references.find(r => r.identifier === node);
-      if (ref) {
-        return { ref, variable: ref.resolved };
-      }
-      // if it's not a reference, it can be just declaration without initializer
-      const variable = scope.variables.find(v => v.defs.find(def => def.name === node));
-      if (variable) {
-        return { ref: null, variable };
-      }
-      // in theory we only need 1-level recursion, only for switch expression, which is likely a bug in eslint
-      // generic recursion is used for safety & readability
-      return resolveReferenceRecursively(node, scope.upper);
+      return { ref: null, variable: null };
     }
 
     function resolveReference(node: TSESTree.Identifier) {

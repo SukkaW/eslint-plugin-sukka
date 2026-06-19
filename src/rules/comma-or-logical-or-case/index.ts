@@ -96,11 +96,14 @@ function getFirstElementAndNestingLevel(
   logicalExpression: TSESTree.LogicalExpression,
   currentLvl: number
 ): [TSESTree.Node, number] | undefined {
-  if (logicalExpression.operator === '||') {
-    if (logicalExpression.left.type === AST_NODE_TYPES.LogicalExpression) {
-      return getFirstElementAndNestingLevel(logicalExpression.left, currentLvl + 1);
+  let current = logicalExpression;
+  let lvl = currentLvl;
+  while (current.operator === '||') {
+    lvl++;
+    if (current.left.type !== AST_NODE_TYPES.LogicalExpression) {
+      return [current.left, lvl];
     }
-    return [logicalExpression.left, currentLvl + 1];
+    current = current.left;
   }
   return undefined;
 }
