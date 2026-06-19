@@ -43,6 +43,7 @@ import reactNoUnnecessaryUseMemo from './rules/react-no-unnecessary-use-memo';
 import reactPreferDestructuringAssignment from './rules/react-prefer-destructuring-assignment';
 import reactNoCircularEffect from './rules/react-no-circular-effect';
 import reactPreferStateUpdaterFunction from './rules/react-prefer-state-updater-function';
+import noArrayFromLengthSpread from './rules/no-array-from-length-spread';
 
 const plugin = {
   configs: {
@@ -61,6 +62,7 @@ const plugin = {
         'sukka/class-prototype': 'warn',
         'sukka/comma-or-logical-or-case': 'error',
         'sukka/no-all-duplicated-branches': 'error',
+        'sukka/no-array-from-length-spread': 'error',
         'sukka/no-chain-array-higher-order-functions': 'error',
         'sukka/no-duplicated-branches': 'error',
         'sukka/no-element-overwrite': 'warn',
@@ -170,7 +172,8 @@ const plugin = {
     'react-no-unnecessary-use-memo': reactNoUnnecessaryUseMemo,
     'react-prefer-destructuring-assignment': reactPreferDestructuringAssignment,
     'react-no-circular-effect': reactNoCircularEffect,
-    'react-prefer-state-updater-function': reactPreferStateUpdaterFunction
+    'react-prefer-state-updater-function': reactPreferStateUpdaterFunction,
+    'no-array-from-length-spread': noArrayFromLengthSpread
   }
 } as const;
 
