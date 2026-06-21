@@ -39,6 +39,13 @@ export default createRule({
     docs: {
       description: 'Return of boolean expressions should not be wrapped into an "if-then-else" statement',
       recommended: 'recommended'
+    },
+    deprecated: {
+      message: 'Replaced by `eslint-plugin-unicorn` rule `unicorn/prefer-boolean-return`',
+      replacedBy: [
+        { message: 'Replaced by `eslint-plugin-unicorn` rule `unicorn/prefer-boolean-return`' }
+      ],
+      availableUntil: null
     }
   },
   create(context) {
