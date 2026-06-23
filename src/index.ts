@@ -44,6 +44,14 @@ import reactPreferDestructuringAssignment from './rules/react-prefer-destructuri
 import reactNoCircularEffect from './rules/react-no-circular-effect';
 import reactPreferStateUpdaterFunction from './rules/react-prefer-state-updater-function';
 import noArrayFromLengthSpread from './rules/no-array-from-length-spread';
+import reactPreferFoxactUseClipboard from './rules/react-prefer-foxact-use-clipboard';
+import reactPreferFoxactPersistent from './rules/react-prefer-foxact-persistent';
+import reactNoUseEffectWatching from './rules/react-no-use-effect-watching';
+import reactNoManualUseEffectRaceConditionPrevention from './rules/react-no-manual-use-effect-race-condition-prevention';
+import reactPreferFoxactUseMediaQuery from './rules/react-prefer-foxact-use-media-query';
+import preferFoxtsNoop from './rules/prefer-foxts-noop';
+import preferNullthrow from './rules/prefer-nullthrow';
+import reactPreferFoxactComposeContextProvider from './rules/react-prefer-foxact-compose-context-provider';
 
 const plugin = {
   configs: {
@@ -88,6 +96,8 @@ const plugin = {
         'sukka/object-format': 'off', // do not enable by default
 
         'sukka/prefer-single-boolean-return': 'error',
+        'sukka/prefer-foxts-noop': 'error',
+        'sukka/prefer-nullthrow': 'error',
         'sukka/track-todo-fixme-comment': 'warn'
       } as Linter.RulesRecord
     },
@@ -125,7 +135,13 @@ const plugin = {
         'sukka/react-no-unnecessary-use-memo': 'error',
         'sukka/react-prefer-destructuring-assignment': 'warn',
         'sukka/react-no-circular-effect': 'error',
-        'sukka/react-prefer-state-updater-function': 'error'
+        'sukka/react-prefer-state-updater-function': 'error',
+        'sukka/react-prefer-foxact-use-clipboard': 'error',
+        'sukka/react-prefer-foxact-persistent': 'error',
+        'sukka/react-no-use-effect-watching': 'error',
+        'sukka/react-no-manual-use-effect-race-condition-prevention': 'error',
+        'sukka/react-prefer-foxact-use-media-query': 'error',
+        'sukka/react-prefer-foxact-compose-context-provider': 'error'
       } as Linter.RulesRecord
     }
   },
@@ -136,6 +152,8 @@ const plugin = {
     'no-expression-empty-lines': no_expression_empty_lines,
     'object-format': object_format,
     'prefer-single-boolean-return': prefer_single_boolean_return,
+    'prefer-foxts-noop': preferFoxtsNoop,
+    'prefer-nullthrow': preferNullthrow,
     'no-all-duplicated-branches': noDuplicatedBranches,
     'no-duplicated-branches': noDuplicatedBranches,
     'bool-param-default': boolParamDefault,
@@ -173,7 +191,13 @@ const plugin = {
     'react-prefer-destructuring-assignment': reactPreferDestructuringAssignment,
     'react-no-circular-effect': reactNoCircularEffect,
     'react-prefer-state-updater-function': reactPreferStateUpdaterFunction,
-    'no-array-from-length-spread': noArrayFromLengthSpread
+    'no-array-from-length-spread': noArrayFromLengthSpread,
+    'react-prefer-foxact-use-clipboard': reactPreferFoxactUseClipboard,
+    'react-prefer-foxact-persistent': reactPreferFoxactPersistent,
+    'react-no-use-effect-watching': reactNoUseEffectWatching,
+    'react-no-manual-use-effect-race-condition-prevention': reactNoManualUseEffectRaceConditionPrevention,
+    'react-prefer-foxact-use-media-query': reactPreferFoxactUseMediaQuery,
+    'react-prefer-foxact-compose-context-provider': reactPreferFoxactComposeContextProvider
   }
 } as const;
 

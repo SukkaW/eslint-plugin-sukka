@@ -82,3 +82,24 @@ export function findParentNode(
   }
   return null;
 }
+
+export type EffectCallback = TSESTree.ArrowFunctionExpression | TSESTree.FunctionExpression;
+
+export function isRangeInside(range: TSESTree.Range, outer: TSESTree.Range) {
+  return outer[0] <= range[0] && range[1] <= outer[1];
+}
+
+export function getEffectCallback(node: TSESTree.CallExpression): EffectCallback | null {
+  return node.arguments.length > 0 && ASTUtils.isFunction(node.arguments[0])
+    ? node.arguments[0]
+    : null;
+}
+
+export function getNearestFunctionAncestor(node: TSESTree.Node): TSESTree.FunctionDeclaration | TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression | null {
+  let current = node.parent ?? null;
+  while (current != null) {
+    if (ASTUtils.isFunction(current)) return current;
+    current = current.parent ?? null;
+  }
+  return null;
+}
