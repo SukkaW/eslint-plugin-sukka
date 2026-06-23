@@ -154,11 +154,13 @@ function findLastWriteExprBefore(
   variable: TSESLint.Scope.Variable,
   def: TSESLint.Scope.Definition,
   readPos: number
-): TSESTree.Expression | null {
-  let lastWriteExpr: TSESTree.Expression | null = def.node.init ?? null;
+): TSESTree.ConstDeclaration | TSESTree.LetOrVarDeclaredDeclaration | TSESTree.LetOrVarNonDeclaredDeclaration | TSESTree.Expression | null {
+  let lastWriteExpr: TSESTree.ConstDeclaration | TSESTree.LetOrVarDeclaredDeclaration | TSESTree.LetOrVarNonDeclaredDeclaration | TSESTree.Expression | null = null;
+  if ('init' in def.node) lastWriteExpr = def.node.init;
+
   for (const ref of variable.references) {
     if (ref.identifier.range[0] >= readPos) return lastWriteExpr;
-    if (ref.isWrite() && ref.writeExpr && ref.writeExpr !== def.node.init) {
+    if (ref.isWrite() && ref.writeExpr && 'init' in def.node && ref.writeExpr !== def.node.init) {
       lastWriteExpr = ref.writeExpr as TSESTree.Expression;
     }
   }
@@ -166,7 +168,7 @@ function findLastWriteExprBefore(
 }
 
 function getStaticStringPrefix(node: TSESTree.Expression, sourceCode: TSESLint.SourceCode): string | null {
-  let current: TSESTree.Expression = node;
+  let current: TSESTree.ConstDeclaration | TSESTree.LetOrVarDeclaredDeclaration | TSESTree.LetOrVarNonDeclaredDeclaration | TSESTree.Expression = node;
   for (;;) {
     const constantValue = ASTUtils.getStringIfConstant(current, sourceCode.getScope(current));
     if (constantValue !== null) {
