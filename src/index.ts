@@ -53,6 +53,7 @@ import preferFoxtsNoop from './rules/prefer-foxts-noop';
 import preferNullthrow from './rules/prefer-nullthrow';
 import reactPreferFoxactComposeContextProvider from './rules/react-prefer-foxact-compose-context-provider';
 import reactNoRenderFunctionProp from './rules/react-no-render-function-prop';
+import reactPreferPropsWithChildren from './rules/react-prefer-props-with-children';
 
 const plugin = {
   configs: {
@@ -143,7 +144,8 @@ const plugin = {
         'sukka/react-no-manual-use-effect-race-condition-prevention': 'error',
         'sukka/react-prefer-foxact-use-media-query': 'error',
         'sukka/react-prefer-foxact-compose-context-provider': 'error',
-        'sukka/react-no-render-function-prop': 'error'
+        'sukka/react-no-render-function-prop': 'error',
+        'sukka/react-prefer-props-with-children': 'error'
       } as Linter.RulesRecord
     }
   },
@@ -200,7 +202,8 @@ const plugin = {
     'react-no-manual-use-effect-race-condition-prevention': reactNoManualUseEffectRaceConditionPrevention,
     'react-prefer-foxact-use-media-query': reactPreferFoxactUseMediaQuery,
     'react-prefer-foxact-compose-context-provider': reactPreferFoxactComposeContextProvider,
-    'react-no-render-function-prop': reactNoRenderFunctionProp
+    'react-no-render-function-prop': reactNoRenderFunctionProp,
+    'react-prefer-props-with-children': reactPreferPropsWithChildren
   }
 } as const;
 
