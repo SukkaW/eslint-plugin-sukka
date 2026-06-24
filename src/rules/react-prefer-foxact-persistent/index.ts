@@ -1,5 +1,5 @@
 import { createRule } from '@/utils/create-eslint-rule';
-import { isGlobalReference, isGlobalMemberAccess, unwrapExpression } from '@/utils/ast';
+import { isGlobalReference, unwrapExpression } from '@/utils/ast';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import type { TSESLint } from '@typescript-eslint/utils';
@@ -29,10 +29,8 @@ function getStorageKind(
 
   const object = unwrapExpression(expression.object);
 
-  if (object.type === AST_NODE_TYPES.Identifier && isGlobalReference(sourceCode, object)) {
-    if (object.name === 'window' || object.name === 'globalThis' || object.name === 'self') {
-      return propertyName === 'localStorage' ? 'local' : 'session';
-    }
+  if (object.type === AST_NODE_TYPES.Identifier && isGlobalReference(sourceCode, object) && (object.name === 'window' || object.name === 'globalThis' || object.name === 'self')) {
+    return propertyName === 'localStorage' ? 'local' : 'session';
   }
 
   return null;
