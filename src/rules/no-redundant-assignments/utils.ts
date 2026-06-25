@@ -117,7 +117,15 @@ function valuesEquals(a: Values, b: Values) {
 }
 
 function setEquals<T>(a: Set<T>, b: Set<T>): boolean {
-  return a.size === b.size && [...a].every(e => b.has(e));
+  if (a.size !== b.size) {
+    return false;
+  }
+  for (const val of a) {
+    if (!b.has(val)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export function resolveAssignedValues(

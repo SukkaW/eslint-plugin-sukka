@@ -122,8 +122,13 @@ export default createRule({
         }
 
         // Check if any reference inside the callback resolves to the component scope
-        const allRefs = [...getAllScopeRefs(arg0Scope)];
-        const hasRefsToComponentScope = allRefs.some((ref) => componentScope.variables.some((v) => v === ref.resolved));
+        let hasRefsToComponentScope = false;
+        for (const ref of getAllScopeRefs(arg0Scope)) {
+          if (componentScope.variables.some((v) => v === ref.resolved)) {
+            hasRefsToComponentScope = true;
+            break;
+          }
+        }
 
         if (hasRefsToComponentScope) return; // references component scope vars - callback is meaningful
 

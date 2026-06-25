@@ -81,12 +81,12 @@ export default createRule({
         currentCodePathSegments.push(segment);
       },
       onCodePathStart(codePath) {
-        pushContext(new CodePathContext(codePath));
+        codePathStack.push(new CodePathContext(codePath));
         codePathSegments.push(currentCodePathSegments);
         currentCodePathSegments.length = 0;
       },
       onCodePathEnd() {
-        popContext();
+        codePathStack.pop();
         const segmentPop = codePathSegments.pop();
         if (!segmentPop) {
           currentCodePathSegments.length = 0;
@@ -122,7 +122,7 @@ export default createRule({
           ref.from
         );
         if (lhsValues?.type === 'AssignedValues' && lhsValues.size === 1) {
-          const [lhsVal] = [...lhsValues];
+          const lhsVal = lhsValues.entries().next().value![0];
           checkRedundantAssignement(ref, ref.writeExpr, lhsVal, rhsValues, variable.name);
         }
         assignedValuesMap.set(variable, rhsValues);
@@ -139,7 +139,7 @@ export default createRule({
       if (rhsValues.type === 'UnknownValue' || rhsValues.size !== 1) {
         return;
       }
-      const [rhsVal] = [...rhsValues];
+      const rhsVal = rhsValues.entries().next().value![0];
       if (variable && !isWrittenOnlyOnce(variable) && lhsVal === rhsVal) {
         context.report({
           node: node!,
@@ -218,14 +218,6 @@ export default createRule({
       }
       return defs;
     }
-
-    function pushContext(codePathContext: CodePathContext) {
-      codePathStack.push(codePathContext);
-    }
-    function popContext() {
-      codePathStack.pop();
-    }
-
     function resolveReferenceRecursively(
       node: TSESTree.Identifier,
       scope: TSESLint.Scope.Scope | null
