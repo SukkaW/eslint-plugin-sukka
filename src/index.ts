@@ -54,6 +54,9 @@ import preferNullthrow from './rules/prefer-nullthrow';
 import reactPreferFoxactComposeContextProvider from './rules/react-prefer-foxact-compose-context-provider';
 import reactNoRenderFunctionProp from './rules/react-no-render-function-prop';
 import reactPreferPropsWithChildren from './rules/react-prefer-props-with-children';
+import reactPreferFoxactUseAbortableEffect from './rules/react-prefer-foxact-use-abortable-effect';
+import preferFoxtsErrorUtil from './rules/prefer-foxts-error-util';
+import preferFoxtsArrayUtils from './rules/prefer-foxts-array-utils';
 
 const plugin = {
   configs: {
@@ -100,6 +103,8 @@ const plugin = {
         'sukka/prefer-single-boolean-return': 'error',
         'sukka/prefer-foxts-noop': 'error',
         'sukka/prefer-nullthrow': 'error',
+        'sukka/prefer-foxts-error-util': 'error',
+        'sukka/prefer-foxts-array-utils': 'error',
         'sukka/track-todo-fixme-comment': 'warn'
       } as Linter.RulesRecord
     },
@@ -145,7 +150,8 @@ const plugin = {
         'sukka/react-prefer-foxact-use-media-query': 'error',
         'sukka/react-prefer-foxact-compose-context-provider': 'error',
         'sukka/react-no-render-function-prop': 'error',
-        'sukka/react-prefer-props-with-children': 'error'
+        'sukka/react-prefer-props-with-children': 'error',
+        'sukka/react-prefer-foxact-use-abortable-effect': 'error'
       } as Linter.RulesRecord
     }
   },
@@ -203,7 +209,10 @@ const plugin = {
     'react-prefer-foxact-use-media-query': reactPreferFoxactUseMediaQuery,
     'react-prefer-foxact-compose-context-provider': reactPreferFoxactComposeContextProvider,
     'react-no-render-function-prop': reactNoRenderFunctionProp,
-    'react-prefer-props-with-children': reactPreferPropsWithChildren
+    'react-prefer-props-with-children': reactPreferPropsWithChildren,
+    'react-prefer-foxact-use-abortable-effect': reactPreferFoxactUseAbortableEffect,
+    'prefer-foxts-error-util': preferFoxtsErrorUtil,
+    'prefer-foxts-array-utils': preferFoxtsArrayUtils
   }
 } as const;
 
