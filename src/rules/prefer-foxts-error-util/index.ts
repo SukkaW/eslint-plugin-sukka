@@ -3,7 +3,7 @@ import { isGlobalReference } from '@/utils/ast';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import type { ParserServicesWithTypeInformation } from '@typescript-eslint/utils';
-import * as ts from 'typescript';
+import type * as ts from 'typescript';
 import { getTypeFromTreeNode } from '../no-for-in-iterable';
 
 const ERROR_LIKE_NAMES = new Set(['err', 'error', 'e', 'ex', 'exception']);
@@ -19,7 +19,7 @@ function isErrorType(type: ts.Type): boolean {
     return type.types.some(isErrorType);
   }
 
-  const bases = type.getBaseTypes?.();
+  const bases = type.getBaseTypes();
   if (bases) {
     return bases.some(isErrorType);
   }
