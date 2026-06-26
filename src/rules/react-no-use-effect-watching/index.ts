@@ -1,12 +1,20 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import type { RuleContext } from '@/utils/create-eslint-rule';
-import { getEffectCallback, isUseEffectCall, isUseStateLikeCall } from '@/utils/react-hooks';
+import { isUseEffectCall, isUseStateLikeCall } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import { TSESLint, ASTUtils } from '@typescript-eslint/utils';
 
 const WATCH_MESSAGE = 'Do not call the set function of useState synchronously in an effect. Respond directly at where the change happens, or find event handlers/callbacks. If it is a purely derived value, compute it within the render phase w/ `useMemo` instead of having separate states.';
 const WATCH_WITH_PROPS_MESSAGE = `${WATCH_MESSAGE} If this needs to reset state from outside, always prefer \`key\` to force-reset a component state, or use \`foxact/use-component-will-receive-update\` as your last resort to change internal state based on props change.`;
+
+type FunctionNode = TSESTree.FunctionDeclaration | TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression;
+
+type FunctionKind =
+  | 'setup'
+  | 'deferred'
+  | 'immediate'
+  | 'other';
 
 function isSetStateCallee(
   context: RuleContext<string, unknown[]>,
@@ -24,57 +32,66 @@ function isSetStateCallee(
   if (declarator.id.type !== AST_NODE_TYPES.ArrayPattern) return false;
   if (declarator.init == null || !isUseStateLikeCall(declarator.init)) return false;
 
-  // Must be the second element (the setter)
   return declarator.id.elements[1] === def.name;
 }
 
-function isDeferredContext(node: TSESTree.Node, boundary: TSESTree.Node): boolean {
-  let current: TSESTree.Node = node;
+function getFunctionKind(node: FunctionNode): FunctionKind {
+  if (node.async) return 'deferred';
 
-  while (current !== boundary) {
-    const parent = current.parent;
-    if (parent == null) return false;
+  const parent = node.parent;
 
-    // async function body — any setState inside is deferred
-    if (ASTUtils.isFunction(current) && current.async) return true;
+  // useEffect(() => { ... })
 
-    if (parent.type === AST_NODE_TYPES.AwaitExpression) return true;
-
-    if (
-      parent.type === AST_NODE_TYPES.CallExpression
-      && parent.arguments.includes(current as TSESTree.CallExpressionArgument)
-    ) {
-      const { callee } = parent;
-
-      // setTimeout / setInterval / queueMicrotask
-      if (
-        callee.type === AST_NODE_TYPES.Identifier
-        && (callee.name === 'setTimeout'
-          || callee.name === 'setInterval'
-          || callee.name === 'queueMicrotask'
-          || callee.name === 'requestAnimationFrame'
-          || callee.name === 'requestIdleCallback')
-      ) {
-        return true;
-      }
-
-      // .then() / .catch() / .finally() / .addEventListener()
-      if (
-        callee.type === AST_NODE_TYPES.MemberExpression
-        && callee.property.type === AST_NODE_TYPES.Identifier
-        && (callee.property.name === 'then'
-          || callee.property.name === 'catch'
-          || callee.property.name === 'finally'
-          || callee.property.name === 'addEventListener')
-      ) {
-        return true;
-      }
-    }
-
-    current = parent;
+  if (
+    parent.type === AST_NODE_TYPES.CallExpression
+    && parent.arguments[0] === node
+    && isUseEffectCall(parent)
+  ) {
+    return 'setup';
   }
 
-  return false;
+  // IIFE: (() => { ... })() or (function() { ... })()
+  if (
+    parent.type === AST_NODE_TYPES.CallExpression
+    && parent.callee === node
+  ) {
+    return 'immediate';
+  }
+
+  // function declarations in a block are synchronously callable helpers
+  if (node.type === AST_NODE_TYPES.FunctionDeclaration) {
+    return 'immediate';
+  }
+
+  if (parent.type === AST_NODE_TYPES.CallExpression && parent.arguments.includes(node)) {
+    const { callee } = parent;
+
+    // setTimeout / setInterval / queueMicrotask / requestAnimationFrame / requestIdleCallback
+    if (
+      callee.type === AST_NODE_TYPES.Identifier
+      && (callee.name === 'setTimeout'
+        || callee.name === 'setInterval'
+        || callee.name === 'queueMicrotask'
+        || callee.name === 'requestAnimationFrame'
+        || callee.name === 'requestIdleCallback')
+    ) {
+      return 'deferred';
+    }
+
+    // .then() / .catch() / .finally() / .addEventListener()
+    if (
+      callee.type === AST_NODE_TYPES.MemberExpression
+      && callee.property.type === AST_NODE_TYPES.Identifier
+      && (callee.property.name === 'then'
+        || callee.property.name === 'catch'
+        || callee.property.name === 'finally'
+        || callee.property.name === 'addEventListener')
+    ) {
+      return 'deferred';
+    }
+  }
+
+  return 'other';
 }
 
 function hasPropDependency(
@@ -84,8 +101,7 @@ function hasPropDependency(
   const depsArg = effectNode.arguments[1];
   if (depsArg.type !== AST_NODE_TYPES.ArrayExpression) return false;
 
-  // Find the enclosing component/hook function
-  let enclosingFunction: TSESTree.FunctionDeclaration | TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression | null = null;
+  let enclosingFunction: FunctionNode | null = null;
   let current: TSESTree.Node | undefined = effectNode.parent;
   while (current != null) {
     if (ASTUtils.isFunction(current)) {
@@ -96,14 +112,12 @@ function hasPropDependency(
   }
   if (enclosingFunction == null || enclosingFunction.params.length === 0) return false;
 
-  // Collect all parameter variables
   const paramVariables = new Set<string>();
   for (const param of enclosingFunction.params) {
     collectParamNames(param, paramVariables);
   }
   if (paramVariables.size === 0) return false;
 
-  // Check if any dep references a param
   for (const element of depsArg.elements) {
     if (element == null || element.type === AST_NODE_TYPES.SpreadElement) continue;
     const rootName = getRootIdentifierName(element);
@@ -165,6 +179,17 @@ function getRootIdentifierName(node: TSESTree.Node): string | null {
   }
 }
 
+function findEnclosingEffectCall(node: TSESTree.Node): TSESTree.CallExpression | null {
+  let current: TSESTree.Node | undefined = node.parent;
+  while (current != null) {
+    if (current.type === AST_NODE_TYPES.CallExpression && isUseEffectCall(current)) {
+      return current;
+    }
+    current = current.parent;
+  }
+  return null;
+}
+
 export default createRule({
   name: 'react-no-use-effect-watching',
   meta: {
@@ -179,33 +204,58 @@ export default createRule({
     schema: []
   },
   create(context) {
+    const functionStack: Array<{ node: FunctionNode, kind: FunctionKind }> = [];
+    let setupFunction: FunctionNode | null = null;
+
+    function onFunctionEnter(node: FunctionNode) {
+      const kind = getFunctionKind(node);
+      functionStack.push({ node, kind });
+      if (kind === 'setup') {
+        setupFunction = node;
+      }
+    }
+
+    function onFunctionExit(node: FunctionNode) {
+      const entry = functionStack.at(-1);
+      if (entry?.kind === 'setup' && setupFunction === node) {
+        setupFunction = null;
+      }
+      functionStack.pop();
+    }
+
     return {
+      FunctionDeclaration: onFunctionEnter,
+      FunctionExpression: onFunctionEnter,
+      ArrowFunctionExpression: onFunctionEnter,
+      'FunctionDeclaration:exit': onFunctionExit,
+      'FunctionExpression:exit': onFunctionExit,
+      'ArrowFunctionExpression:exit': onFunctionExit,
+
       CallExpression(node) {
         if (!isSetStateCallee(context, node.callee)) return;
+        if (setupFunction == null) return;
 
-        // Walk up to find if we're inside a useEffect callback
-        let current: TSESTree.Node | undefined = node.parent;
-        while (current != null) {
-          if (
-            current.type === AST_NODE_TYPES.CallExpression
-            && isUseEffectCall(current)
-          ) {
-            const callback = getEffectCallback(current);
-            if (callback == null) break;
-
-            if (!isDeferredContext(node, callback)) {
-              context.report({
-                node,
-                messageId: hasPropDependency(current)
-                  ? 'watchStateWithProps'
-                  : 'watchState'
-              });
-            }
-            return;
+        let isSynchronous = false;
+        for (let i = functionStack.length - 1; i >= 0; i--) {
+          const { kind } = functionStack[i];
+          if (kind === 'setup') {
+            isSynchronous = true;
+            break;
           }
-
-          current = current.parent;
+          // Only IIFEs are transparent — deferred and other functions break the chain
+          if (kind !== 'immediate') break;
         }
+        if (!isSynchronous) return;
+
+        const effectCall = findEnclosingEffectCall(node);
+        if (effectCall == null) return;
+
+        context.report({
+          node,
+          messageId: hasPropDependency(effectCall)
+            ? 'watchStateWithProps'
+            : 'watchState'
+        });
       }
     };
   }
