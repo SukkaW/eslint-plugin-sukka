@@ -9,10 +9,8 @@ import { getTypeFromTreeNode } from '../no-for-in-iterable';
 const ERROR_LIKE_NAMES = new Set(['err', 'error', 'e', 'ex', 'exception']);
 
 function isErrorType(type: ts.Type): boolean {
-  const symbol = type.getSymbol();
-  if (symbol != null) {
-    const name = symbol.getName();
-    if (name === 'Error' || name.endsWith('Error')) return true;
+  if (type.getSymbol()?.getName() === 'Error') {
+    return true;
   }
 
   if (type.isUnion()) {
@@ -48,6 +46,13 @@ function looksLikeErrorVariable(node: TSESTree.Node): boolean {
   return ERROR_LIKE_NAMES.has(node.name.toLowerCase());
 }
 
+function isAnyOrUnknown(type: ts.Type): boolean {
+  const flags = type.getFlags();
+  return (flags & 1) !== 0 // Any
+    || (flags & 2) !== 0 // Unknown
+    || (flags & 32768) !== 0; // Undefined (for undeclared variables)
+}
+
 function isErrorVariable(
   node: TSESTree.Node,
   services: ParserServicesWithTypeInformation | null
@@ -55,18 +60,18 @@ function isErrorVariable(
   if (node.type !== AST_NODE_TYPES.Identifier) return false;
 
   if (isCatchClauseParam(node)) return true;
-  if (looksLikeErrorVariable(node)) return true;
 
   if (services != null) {
     try {
       const type = getTypeFromTreeNode(node, services);
       if (isErrorType(type)) return true;
+      if (!isAnyOrUnknown(type)) return false;
     } catch {
-      // no type info
+      // no type info, fall through to name heuristic
     }
   }
 
-  return false;
+  return looksLikeErrorVariable(node);
 }
 
 const supportedComparisonOperators = new Set(['===', '!==', '==', '!=']);

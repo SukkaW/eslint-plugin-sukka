@@ -33,7 +33,21 @@ runTest({
     'error.message.includes("timeout")',
     // String with non-error-named variable in non-catch context
     'String(result)',
-    'JSON.stringify(response)'
+    'JSON.stringify(response)',
+    // Non-Error typed variable with error-like name should not be flagged
+    dedent`
+      interface ApiError { code: number; message: string }
+      const errors: ApiError[] = [];
+      errors.map((e) => e.message).join('\\n');
+    `,
+    dedent`
+      const error = { data: { errors: [{ message: 'bad' }] } };
+      error.data.errors.map((e) => e.message);
+    `,
+    dedent`
+      const err: string = 'something went wrong';
+      String(err);
+    `
   ],
   invalid: [
     // instanceof Error
@@ -125,6 +139,22 @@ runTest({
       code: dedent`
         const v: Error = getError();
         String(v);
+      `,
+      errors: [{ messageId: 'preferExtractErrorMessage' }]
+    },
+    // Error subclass should still be caught
+    {
+      code: dedent`
+        class HTTPError extends Error {}
+        const e = new HTTPError('fail');
+        String(e);
+      `,
+      errors: [{ messageId: 'preferExtractErrorMessage' }]
+    },
+    {
+      code: dedent`
+        declare const e: TypeError;
+        e.message;
       `,
       errors: [{ messageId: 'preferExtractErrorMessage' }]
     }
