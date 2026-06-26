@@ -85,6 +85,26 @@ runTest({
         }
       `,
       errors: [{ messageId: 'watchState' }]
+    },
+    // Arrow function assigned to variable then called synchronously
+    {
+      code: dedent`
+        import { useEffect, useState } from "react";
+
+        function Component() {
+          const [value, setValue] = useState(0);
+
+          useEffect(() => {
+            const cb = () => {
+              setValue(1);
+            };
+            cb();
+          }, []);
+
+          return value;
+        }
+      `,
+      errors: [{ messageId: 'watchState' }]
     }
   ],
   valid: [

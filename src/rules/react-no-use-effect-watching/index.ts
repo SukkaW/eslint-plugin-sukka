@@ -32,16 +32,17 @@ function isSetStateCallee(
   if (declarator.id.type !== AST_NODE_TYPES.ArrayPattern) return false;
   if (declarator.init == null || !isUseStateLikeCall(declarator.init)) return false;
 
+  // Must be the second element (the setter)
   return declarator.id.elements[1] === def.name;
 }
 
 function getFunctionKind(node: FunctionNode): FunctionKind {
+  // async function body — any setState inside is deferred
   if (node.async) return 'deferred';
 
   const parent = node.parent;
 
   // useEffect(() => { ... })
-
   if (
     parent.type === AST_NODE_TYPES.CallExpression
     && parent.arguments[0] === node
@@ -94,6 +95,32 @@ function getFunctionKind(node: FunctionNode): FunctionKind {
   return 'other';
 }
 
+function resolveFunctionNode(
+  context: RuleContext<string, unknown[]>,
+  node: TSESTree.Node
+): FunctionNode | null {
+  if (node.type !== AST_NODE_TYPES.Identifier) return null;
+
+  const variable = ASTUtils.findVariable(context.sourceCode.getScope(node), node.name);
+  if (variable == null) return null;
+
+  const def = variable.defs.at(0);
+  if (def == null) return null;
+
+  if (def.type === TSESLint.Scope.DefinitionType.FunctionName) {
+    return def.node as FunctionNode;
+  }
+
+  if (def.type === TSESLint.Scope.DefinitionType.Variable) {
+    const init = def.node.init;
+    if (init != null && ASTUtils.isFunction(init)) {
+      return init;
+    }
+  }
+
+  return null;
+}
+
 function hasPropDependency(
   effectNode: TSESTree.CallExpression
 ): boolean {
@@ -101,6 +128,7 @@ function hasPropDependency(
   const depsArg = effectNode.arguments[1];
   if (depsArg.type !== AST_NODE_TYPES.ArrayExpression) return false;
 
+  // Find the enclosing component/hook function
   let enclosingFunction: FunctionNode | null = null;
   let current: TSESTree.Node | undefined = effectNode.parent;
   while (current != null) {
@@ -112,12 +140,14 @@ function hasPropDependency(
   }
   if (enclosingFunction == null || enclosingFunction.params.length === 0) return false;
 
+  // Collect all parameter variables
   const paramVariables = new Set<string>();
   for (const param of enclosingFunction.params) {
     collectParamNames(param, paramVariables);
   }
   if (paramVariables.size === 0) return false;
 
+  // Check if any dep references a param
   for (const element of depsArg.elements) {
     if (element == null || element.type === AST_NODE_TYPES.SpreadElement) continue;
     const rootName = getRootIdentifierName(element);
@@ -207,6 +237,11 @@ export default createRule({
     const functionStack: Array<{ node: FunctionNode, kind: FunctionKind }> = [];
     let setupFunction: FunctionNode | null = null;
 
+    // setState calls found inside 'other'-kind functions, keyed by the function node
+    const deferredSetStateCalls = new WeakMap<FunctionNode, TSESTree.CallExpression[]>();
+    // Functions called directly from a synchronous context within setup
+    const calledFromSetup = new Set<FunctionNode>();
+
     function onFunctionEnter(node: FunctionNode) {
       const kind = getFunctionKind(node);
       functionStack.push({ node, kind });
@@ -223,6 +258,15 @@ export default createRule({
       functionStack.pop();
     }
 
+    function isSynchronousContext(): boolean {
+      for (let i = functionStack.length - 1; i >= 0; i--) {
+        const { kind } = functionStack[i];
+        if (kind === 'setup') return true;
+        if (kind !== 'immediate') return false;
+      }
+      return false;
+    }
+
     return {
       FunctionDeclaration: onFunctionEnter,
       FunctionExpression: onFunctionEnter,
@@ -232,30 +276,65 @@ export default createRule({
       'ArrowFunctionExpression:exit': onFunctionExit,
 
       CallExpression(node) {
-        if (!isSetStateCallee(context, node.callee)) return;
         if (setupFunction == null) return;
 
-        let isSynchronous = false;
-        for (let i = functionStack.length - 1; i >= 0; i--) {
-          const { kind } = functionStack[i];
-          if (kind === 'setup') {
-            isSynchronous = true;
-            break;
+        // Track direct calls to local functions from synchronous context: cb()
+        if (
+          node.callee.type === AST_NODE_TYPES.Identifier
+          && isSynchronousContext()
+        ) {
+          const resolved = resolveFunctionNode(context, node.callee);
+          if (resolved != null) {
+            calledFromSetup.add(resolved);
           }
-          // Only IIFEs are transparent — deferred and other functions break the chain
-          if (kind !== 'immediate') break;
         }
-        if (!isSynchronous) return;
 
-        const effectCall = findEnclosingEffectCall(node);
-        if (effectCall == null) return;
+        if (!isSetStateCallee(context, node.callee)) return;
 
-        context.report({
-          node,
-          messageId: hasPropDependency(effectCall)
-            ? 'watchStateWithProps'
-            : 'watchState'
-        });
+        const entry = functionStack.at(-1);
+        if (entry == null) return;
+
+        if (isSynchronousContext()) {
+          const effectCall = findEnclosingEffectCall(node);
+          if (effectCall == null) return;
+
+          context.report({
+            node,
+            messageId: hasPropDependency(effectCall)
+              ? 'watchStateWithProps'
+              : 'watchState'
+          });
+          return;
+        }
+
+        // Collect setState in 'other' functions for deferred resolution
+        if (entry.kind === 'other') {
+          let calls = deferredSetStateCalls.get(entry.node);
+          if (calls == null) {
+            calls = [];
+            deferredSetStateCalls.set(entry.node, calls);
+          }
+          calls.push(node);
+        }
+      },
+
+      'Program:exit'() {
+        for (const fnNode of calledFromSetup) {
+          const calls = deferredSetStateCalls.get(fnNode);
+          if (calls == null) continue;
+
+          for (const setStateCall of calls) {
+            const effectCall = findEnclosingEffectCall(setStateCall);
+            if (effectCall == null) continue;
+
+            context.report({
+              node: setStateCall,
+              messageId: hasPropDependency(effectCall)
+                ? 'watchStateWithProps'
+                : 'watchState'
+            });
+          }
+        }
       }
     };
   }
