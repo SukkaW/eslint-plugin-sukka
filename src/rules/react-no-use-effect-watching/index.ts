@@ -318,7 +318,7 @@ export default createRule({
         }
       },
 
-      'Program:exit'() {
+      'Program:exit': () => {
         for (const fnNode of calledFromSetup) {
           const calls = deferredSetStateCalls.get(fnNode);
           if (calls == null) continue;
