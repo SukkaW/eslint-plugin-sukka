@@ -88,6 +88,34 @@ runTest({
         appendArrayInPlace(this.items, newItems);
       `,
       errors: [{ messageId: 'noSpreadInPush' }]
+    },
+    // Inside if-else should only fix the push, not the whole if-else
+    {
+      code: dedent`
+        if (condition) {
+          arr.push(...items);
+        }
+      `,
+      output: dedent`
+        import { appendArrayInPlace } from 'foxts/append-array-in-place';
+        if (condition) {
+          appendArrayInPlace(arr, items);
+        }
+      `,
+      errors: [{ messageId: 'noSpreadInPush' }]
+    },
+    // Unbraced if should only fix the push statement
+    {
+      code: dedent`
+        if (condition)
+          arr.push(...items);
+      `,
+      output: dedent`
+        import { appendArrayInPlace } from 'foxts/append-array-in-place';
+        if (condition)
+          appendArrayInPlace(arr, items);
+      `,
+      errors: [{ messageId: 'noSpreadInPush' }]
     }
   ]
 });

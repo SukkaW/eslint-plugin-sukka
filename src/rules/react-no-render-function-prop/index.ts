@@ -1,6 +1,7 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
+import { appendArrayInPlace } from 'foxts/append-array-in-place';
 
 const JSX_RETURN_TYPE_NAMES = new Set([
   'ReactNode',
@@ -122,7 +123,9 @@ function resolveTypeMembers(
     const allMembers: TSESTree.TSPropertySignature[] = [];
     for (const member of typeNode.types) {
       const resolved = resolveTypeMembers(member, typeMap);
-      if (resolved != null) allMembers.push(...resolved);
+      if (resolved != null) {
+        appendArrayInPlace(allMembers, resolved);
+      }
     }
     return allMembers.length > 0 ? allMembers : null;
   }

@@ -138,6 +138,20 @@ export default createRule({
       return null;
     }
 
+    const checkSide = (
+      literalSide: TSESTree.Node,
+      callSide: TSESTree.Node
+    ): TSESTree.Node | null => {
+      if (
+        literalSide.type === AST_NODE_TYPES.Literal
+        && literalSide.value === '[object Error]'
+        && callSide.type === AST_NODE_TYPES.CallExpression
+      ) {
+        return getToStringCallArgument(callSide);
+      }
+      return null;
+    };
+
     return {
       // instanceof Error
       BinaryExpression(node) {
@@ -156,20 +170,6 @@ export default createRule({
 
         // Object.prototype.toString.call(x) === '[object Error]'
         if (!supportedComparisonOperators.has(node.operator)) return;
-
-        const checkSide = (
-          literalSide: TSESTree.Node,
-          callSide: TSESTree.Node
-        ): TSESTree.Node | null => {
-          if (
-            literalSide.type === AST_NODE_TYPES.Literal
-            && literalSide.value === '[object Error]'
-            && callSide.type === AST_NODE_TYPES.CallExpression
-          ) {
-            return getToStringCallArgument(callSide);
-          }
-          return null;
-        };
 
         const argument = checkSide(node.right, node.left) ?? checkSide(node.left, node.right);
         if (argument == null) return;

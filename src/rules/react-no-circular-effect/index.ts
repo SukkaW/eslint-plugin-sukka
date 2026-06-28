@@ -5,6 +5,7 @@ import type { Scope } from '@typescript-eslint/utils/ts-eslint';
 import { findVariable } from '@typescript-eslint/utils/ast-utils';
 import { isUseEffectCall, isUseStateLikeCall } from '@/utils/react-hooks';
 import { fastStringArrayJoin } from 'foxts/fast-string-array-join';
+import { appendArrayInPlace } from 'foxts/append-array-in-place';
 
 function collectDepVarChildren(node: TSESTree.Node, stack: TSESTree.Node[]): boolean | null {
   switch (node.type) {
@@ -36,11 +37,11 @@ function collectDepVarChildren(node: TSESTree.Node, stack: TSESTree.Node[]): boo
       return false;
     case AST_NODE_TYPES.CallExpression:
     case AST_NODE_TYPES.NewExpression:
-      stack.push(...node.arguments);
+      appendArrayInPlace(stack, node.arguments);
       return false;
     case AST_NODE_TYPES.SequenceExpression:
     case AST_NODE_TYPES.TemplateLiteral:
-      stack.push(...node.expressions);
+      appendArrayInPlace(stack, node.expressions);
       return false;
     default:
       return false;

@@ -83,6 +83,9 @@ export default createRule({
   create(context) {
     return {
       ':function': (node: SupportedFunction) => {
+        // Class methods (constructors, getters, setters, overrides) can't be replaced with noop
+        if (node.parent.type === AST_NODE_TYPES.MethodDefinition || node.parent.type === AST_NODE_TYPES.Property) return;
+
         const messageId = getFunctionBodyKind(node);
         if (messageId == null) return;
 

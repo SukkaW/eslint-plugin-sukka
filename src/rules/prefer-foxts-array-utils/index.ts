@@ -84,12 +84,9 @@ export default createRule({
             }
             flushNonSpread();
 
-            // Find the statement that contains this call
+            // Find the ExpressionStatement that contains this call
             let statement: TSESTree.Node = node;
-            while (
-              statement.parent.type !== AST_NODE_TYPES.Program
-              && statement.parent.type !== AST_NODE_TYPES.BlockStatement
-            ) {
+            while (statement.type !== AST_NODE_TYPES.ExpressionStatement && statement.parent != null) {
               statement = statement.parent;
             }
 

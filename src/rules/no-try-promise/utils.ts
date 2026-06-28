@@ -2,6 +2,7 @@ import type { RuleContext } from '@/utils/create-eslint-rule';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import type { TSESLint } from '@typescript-eslint/utils';
+import { appendArrayInPlace } from 'foxts/append-array-in-place';
 
 type CallLikeExpression =
   | TSESTree.CallExpression
@@ -50,7 +51,7 @@ function childrenOf(node: TSESTree.Node, visitorKeys: TSESLint.Parser.VisitorKey
        */
       const child = node[key as keyof typeof node];
       if (Array.isArray(child)) {
-        children.push(...child);
+        appendArrayInPlace(children, child);
       } else {
         children.push(child);
       }

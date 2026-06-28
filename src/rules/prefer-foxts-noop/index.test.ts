@@ -25,7 +25,44 @@ runTest({
         await sideEffect();
       }
     `,
-    'const magic = () => 42;'
+    'const magic = () => 42;',
+    // Empty constructor should not be flagged
+    dedent`
+      class Foo {
+        constructor() {}
+      }
+    `,
+    // Constructor with parameter properties
+    dedent`
+      class Foo {
+        constructor(public name: string) {}
+      }
+    `,
+    // Empty class method
+    dedent`
+      class Foo {
+        handleClick() {}
+      }
+    `,
+    // Override method
+    dedent`
+      class Foo extends Bar {
+        override reset() {}
+      }
+    `,
+    // Getter/setter
+    dedent`
+      class Foo {
+        get value() { return true; }
+        set value(v: boolean) {}
+      }
+    `,
+    // Object method shorthand
+    dedent`
+      const obj = {
+        onClick() {}
+      };
+    `
   ],
   invalid: [
     {

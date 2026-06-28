@@ -5,6 +5,7 @@ import type { InvalidTestCase, ValidTestCase, TestCaseError } from '@typescript-
 import type { ExportedRuleModule } from '@/utils/create-eslint-rule';
 import { after, describe, it } from 'mocha';
 import type { TSESLint } from '@typescript-eslint/utils';
+import { noop } from 'foxts/noop';
 
 RuleTester.afterAll = after;
 RuleTester.it = it;
@@ -101,8 +102,6 @@ function runTest<TOptions extends readonly unknown[], TMessageIds extends string
 
 export { runTest };
 
-runTest.skip = <TOptions extends readonly unknown[], TMessageIds extends string>(
+runTest.skip = noop as <TOptions extends readonly unknown[], TMessageIds extends string>(
   _args: RunOptions<TOptions, TMessageIds>
-) => {
-  // noop
-};
+) => void;
