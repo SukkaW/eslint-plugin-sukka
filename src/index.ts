@@ -57,8 +57,12 @@ import reactPreferPropsWithChildren from './rules/react-prefer-props-with-childr
 import reactPreferFoxactUseAbortableEffect from './rules/react-prefer-foxact-use-abortable-effect';
 import preferFoxtsErrorUtil from './rules/prefer-foxts-error-util';
 import preferFoxtsArrayUtils from './rules/prefer-foxts-array-utils';
+import avoidStringStartsWithSingleChar from './rules/avoid-string-starts-with-single-char';
+import banUselessFunction from './rules/ban-useless-function';
 import reactNoUseStateAsRef from './rules/react-no-use-state-as-ref';
 import reactNoPerformanceImpactingArrayFind from './rules/react-no-performance-impacting-array-find';
+import noRegexInFunction from './rules/no-regex-in-function';
+import noConstantArrayIncludes from './rules/no-constant-array-includes';
 
 const plugin = {
   configs: {
@@ -107,6 +111,10 @@ const plugin = {
         'sukka/prefer-nullthrow': 'error',
         'sukka/prefer-foxts-error-util': 'error',
         'sukka/prefer-foxts-array-utils': 'error',
+        'sukka/avoid-string-starts-with-single-char': 'error',
+        'sukka/ban-useless-function': 'warn',
+        'sukka/no-regex-in-function': 'warn',
+        'sukka/no-constant-array-includes': 'warn',
         'sukka/track-todo-fixme-comment': 'warn'
       } as Linter.RulesRecord
     },
@@ -217,8 +225,12 @@ const plugin = {
     'react-prefer-foxact-use-abortable-effect': reactPreferFoxactUseAbortableEffect,
     'prefer-foxts-error-util': preferFoxtsErrorUtil,
     'prefer-foxts-array-utils': preferFoxtsArrayUtils,
+    'avoid-string-starts-with-single-char': avoidStringStartsWithSingleChar,
+    'ban-useless-function': banUselessFunction,
     'react-no-use-state-as-ref': reactNoUseStateAsRef,
-    'react-no-performance-impacting-array-find': reactNoPerformanceImpactingArrayFind
+    'react-no-performance-impacting-array-find': reactNoPerformanceImpactingArrayFind,
+    'no-regex-in-function': noRegexInFunction,
+    'no-constant-array-includes': noConstantArrayIncludes
   }
 } as const;
 
