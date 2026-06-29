@@ -1,37 +1,30 @@
 import { createRule } from '@/utils/create-eslint-rule';
+import { isComponentName } from '@/utils/react-hooks';
+import type { FunctionNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 
 export type MessageId = 'default';
-
-type FunctionNode =
-  | TSESTree.FunctionDeclaration
-  | TSESTree.FunctionExpression
-  | TSESTree.ArrowFunctionExpression;
-
-function isUpperCaseStart(name: string): boolean {
-  return name.length > 0 && /^[A-Z]/.test(name);
-}
 
 function isLikelyComponent(node: FunctionNode): boolean {
   const parent = node.parent as TSESTree.Node | undefined;
 
   // FunctionDeclaration with uppercase name, but skip `export default function App`
   if (node.type === AST_NODE_TYPES.FunctionDeclaration) {
-    if (node.id == null || !isUpperCaseStart(node.id.name)) return false;
+    if (node.id == null || !isComponentName(node.id.name)) return false;
     return parent?.type !== AST_NODE_TYPES.ExportDefaultDeclaration;
   }
 
   // FunctionExpression with uppercase name: function App(props) {} passed to memo/forwardRef
   if (node.type === AST_NODE_TYPES.FunctionExpression && node.id != null) {
-    return isUpperCaseStart(node.id.name);
+    return isComponentName(node.id.name);
   }
 
   // Arrow function assigned to uppercase variable: const App = (props) => {}
   if (parent?.type === AST_NODE_TYPES.VariableDeclarator) {
     const id = parent.id;
     if (id.type === AST_NODE_TYPES.Identifier) {
-      return isUpperCaseStart(id.name);
+      return isComponentName(id.name);
     }
   }
 

@@ -1,4 +1,6 @@
 import { createRule } from '@/utils/create-eslint-rule';
+import { isComponentName } from '@/utils/react-hooks';
+import type { FunctionNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import { appendArrayInPlace } from 'foxts/append-array-in-place';
@@ -10,21 +12,12 @@ const JSX_RETURN_TYPE_NAMES = new Set([
   'Element'
 ]);
 
-type FunctionNode =
-  | TSESTree.FunctionDeclaration
-  | TSESTree.FunctionExpression
-  | TSESTree.ArrowFunctionExpression;
-
-function isUpperCaseStart(name: string): boolean {
-  return name.length > 0 && name[0] >= 'A' && name[0] <= 'Z';
-}
-
 function getComponentName(node: FunctionNode): string | null {
   if (node.type === AST_NODE_TYPES.FunctionDeclaration && node.id != null) {
-    return isUpperCaseStart(node.id.name) ? node.id.name : null;
+    return isComponentName(node.id.name) ? node.id.name : null;
   }
 
-  if (node.type === AST_NODE_TYPES.FunctionExpression && node.id != null && isUpperCaseStart(node.id.name)) {
+  if (node.type === AST_NODE_TYPES.FunctionExpression && node.id != null && isComponentName(node.id.name)) {
     return node.id.name;
   }
 
@@ -34,7 +27,7 @@ function getComponentName(node: FunctionNode): string | null {
   if (
     parent.type === AST_NODE_TYPES.VariableDeclarator
     && parent.id.type === AST_NODE_TYPES.Identifier
-    && isUpperCaseStart(parent.id.name)
+    && isComponentName(parent.id.name)
   ) {
     return parent.id.name;
   }
@@ -72,7 +65,7 @@ function getWrapperComponentName(callExpr: TSESTree.CallExpression): string | nu
   if (
     parent.type === AST_NODE_TYPES.VariableDeclarator
     && parent.id.type === AST_NODE_TYPES.Identifier
-    && isUpperCaseStart(parent.id.name)
+    && isComponentName(parent.id.name)
   ) {
     return parent.id.name;
   }

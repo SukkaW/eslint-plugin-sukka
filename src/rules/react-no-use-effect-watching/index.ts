@@ -1,14 +1,13 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import type { RuleContext } from '@/utils/create-eslint-rule';
 import { isUseEffectCall, isUseStateLikeCall } from '@/utils/react-hooks';
+import type { FunctionNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import { TSESLint, ASTUtils } from '@typescript-eslint/utils';
 
 const WATCH_MESSAGE = 'Do not call the set function of useState synchronously in an effect. Respond directly at where the change happens, or find event handlers/callbacks. If it is a purely derived value, compute it within the render phase w/ `useMemo` instead of having separate states.';
 const WATCH_WITH_PROPS_MESSAGE = `${WATCH_MESSAGE} If this needs to reset state from outside, always prefer \`key\` to force-reset a component state, or use \`foxact/use-component-will-receive-update\` as your last resort to change internal state based on props change.`;
-
-type FunctionNode = TSESTree.FunctionDeclaration | TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression;
 
 type FunctionKind =
   | 'setup'
