@@ -1,7 +1,11 @@
 import type { RuleFix } from '@typescript-eslint/utils/ts-eslint';
 import { createRule } from '@/utils/create-eslint-rule';
+import { RE_NEWLINE } from '@/utils/ast';
 import { detectEol } from 'foxts/detect-eol';
 import type { TSESTree } from '@typescript-eslint/types';
+
+// eslint-disable-next-line regexp/optimal-quantifier-concatenation -- Wait for https://github.com/ota-meshi/eslint-plugin-regexp/issues/451
+const RE_TAIL = /^((?: as const)?\S*).*/u;
 
 export interface Options {
   maxLineLength?: number,
@@ -113,9 +117,8 @@ export default createRule<Options, [Options], MessageIds>({
           const brackets = 4;
 
           const tail = getText(node.range[1])
-            .split(/\r\n|\n/u, 1)[0]
-            // eslint-disable-next-line regexp/optimal-quantifier-concatenation -- Wait for https://github.com/ota-meshi/eslint-plugin-regexp/issues/451
-            .replace(/^((?: as const)?\S*).*/u, '$1')
+            .split(RE_NEWLINE, 1)[0]
+            .replace(RE_TAIL, '$1')
             .length;
 
           return headPosition.column + contents + commas + brackets + tail;

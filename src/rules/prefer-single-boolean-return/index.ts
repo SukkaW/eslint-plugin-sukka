@@ -108,12 +108,12 @@ function isReturningFalse(stmt: TSESTree.Statement): boolean {
   return (returnStmt.argument as TSESTree.Literal).value === false;
 }
 
+const BOOLEAN_OPERATORS = new Set(['!', '==', '===', '!=', '!==', '<', '<=', '>', '>=', 'in', 'instanceof']);
+
 function isBooleanExpression(expr: TSESTree.Expression) {
   return (
     (expr.type === AST_NODE_TYPES.UnaryExpression || expr.type === AST_NODE_TYPES.BinaryExpression)
-    && ['!', '==', '===', '!=', '!==', '<', '<=', '>', '>=', 'in', 'instanceof'].includes(
-      expr.operator
-    )
+    && BOOLEAN_OPERATORS.has(expr.operator)
   );
 }
 

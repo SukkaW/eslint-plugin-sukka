@@ -3,6 +3,8 @@ import type { TSESTree } from '@typescript-eslint/types';
 import type { TSESLint } from '@typescript-eslint/utils';
 import { findVariable } from '@typescript-eslint/utils/ast-utils';
 
+export const RE_NEWLINE = /\r\n?|\n/;
+
 export function isGlobalReference(
   sourceCode: TSESLint.SourceCode,
   node: TSESTree.Node | null

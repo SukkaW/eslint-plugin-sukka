@@ -83,6 +83,38 @@ function isMutableBinding(variable: TSESLint.Scope.Variable): boolean {
   return false;
 }
 
+function isConstMutatedObject(variable: TSESLint.Scope.Variable): boolean {
+  for (const def of variable.defs) {
+    if (def.type !== TSESLint.Scope.DefinitionType.Variable) continue;
+    if (def.node.parent.kind !== 'const') continue;
+    if (def.node.init == null || !isFreshMutableExpression(def.node.init)) continue;
+
+    // Exported mutable object can be mutated by any importing module
+    const declaration = def.node.parent;
+    if (declaration.parent.type === AST_NODE_TYPES.ExportNamedDeclaration) return true;
+
+    // const binding to mutable object — check if any reference mutates it
+    for (const ref of variable.references) {
+      const id = ref.identifier;
+      const parent = id.parent;
+
+      // export { arr } — named export elsewhere in the file
+      if (parent.type === AST_NODE_TYPES.ExportSpecifier) return true;
+
+      if (parent.type !== AST_NODE_TYPES.MemberExpression || parent.object !== id) continue;
+
+      const grandparent = parent.parent;
+      // arr[i] = x, obj.key = x
+      if (grandparent.type === AST_NODE_TYPES.AssignmentExpression && grandparent.left === parent) return true;
+      // delete obj.key
+      if (grandparent.type === AST_NODE_TYPES.UnaryExpression && grandparent.operator === 'delete') return true;
+      // arr.push(), obj.method() — any method call on the object is potentially mutating
+      if (grandparent.type === AST_NODE_TYPES.CallExpression && grandparent.callee === parent) return true;
+    }
+  }
+  return false;
+}
+
 export default createRule({
   name: 'ban-useless-function',
   meta: {
@@ -140,9 +172,8 @@ export default createRule({
           // Mutable binding — function result depends on when it's called
           if (isMutableBinding(variable)) return;
 
-          // For immutable bindings that findVariable resolved (const, import, enum, etc.),
-          // getStaticValue confirms the value is determinable
-          if (ASTUtils.getStaticValue(ref.identifier, funcScope) != null) continue;
+          // const binding to a mutable object that is mutated elsewhere
+          if (isConstMutatedObject(variable)) return;
 
           // Immutable binding whose value can't be statically resolved (e.g. import, function, class, enum) — still pre-determinable
         }

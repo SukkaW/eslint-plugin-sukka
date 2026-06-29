@@ -1,4 +1,5 @@
 import { createRule } from '@/utils/create-eslint-rule';
+import { RE_NEWLINE } from '@/utils/ast';
 import type { RuleFix } from '@typescript-eslint/utils/ts-eslint';
 import { detectEol } from 'foxts/detect-eol';
 
@@ -49,7 +50,7 @@ function leadingSpaces(str: string): string {
 }
 
 function trimLeadingEmptyLines(str: string): string {
-  const leadingLines = leadingSpaces(str).split(/\r\n|\n/u);
+  const leadingLines = leadingSpaces(str).split(RE_NEWLINE);
 
   return (leadingLines.at(-1) ?? '') + str.trimStart();
 }

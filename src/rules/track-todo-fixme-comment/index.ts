@@ -21,6 +21,7 @@
 
 import type { TSESTree } from '@typescript-eslint/types';
 import { createRule } from '@/utils/create-eslint-rule';
+import { RE_NEWLINE } from '@/utils/ast';
 
 export default createRule({
   name: 'track-todo-fixme-comment',
@@ -47,7 +48,7 @@ export default createRule({
         const rawText = comment.value.toLowerCase();
 
         if (rawText.includes(pattern)) {
-          const lines = rawText.split(/\r\n?|\n/);
+          const lines = rawText.split(RE_NEWLINE);
 
           for (let i = 0; i < lines.length; i++) {
             const index = lines[i].indexOf(pattern);

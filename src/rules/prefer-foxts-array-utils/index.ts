@@ -2,6 +2,8 @@ import { createRule } from '@/utils/create-eslint-rule';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 
+const RE_LEADING_WHITESPACE = /^(\s*)/;
+
 function hasSpreadArgument(node: TSESTree.CallExpression): boolean {
   return node.arguments.some((arg) => arg.type === AST_NODE_TYPES.SpreadElement);
 }
@@ -90,7 +92,7 @@ export default createRule({
               statement = statement.parent;
             }
 
-            const indent = /^(\s*)/.exec(context.sourceCode.getText(statement))?.[1] ?? '';
+            const indent = RE_LEADING_WHITESPACE.exec(context.sourceCode.getText(statement))?.[1] ?? '';
             const replacement = segments.join('\n' + indent);
 
             yield fixer.replaceText(statement, replacement);
