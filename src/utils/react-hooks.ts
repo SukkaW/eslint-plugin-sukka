@@ -41,6 +41,30 @@ export function resolveToArrayExpression(
   }
 }
 
+// --- Type aliases ---
+
+export type FunctionNode = TSESTree.FunctionDeclaration | TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression;
+
+// --- Naming conventions ---
+
+// 'A'(65) through 'Z'(90)
+export function isComponentName(name: string): boolean {
+  const firstChar = name.codePointAt(0);
+  return firstChar != null && firstChar >= 65 && firstChar <= 90;
+}
+
+export function isHookName(name: string): boolean {
+  if (name === 'use') return true;
+  if (!name.startsWith('use')) return false;
+  // 'A'(65) through 'Z'(90): use followed by uppercase letter
+  const ch = name.codePointAt(3);
+  return ch != null && ch >= 65 && ch <= 90;
+}
+
+export function isComponentOrHookName(name: string): boolean {
+  return isComponentName(name) || isHookName(name);
+}
+
 // --- AST helpers ---
 const isUseEffectNames = (name: string) => name.startsWith('use') && name.endsWith('Effect');
 
@@ -95,7 +119,7 @@ export function getEffectCallback(node: TSESTree.CallExpression): EffectCallback
     : null;
 }
 
-export function getNearestFunctionAncestor(node: TSESTree.Node): TSESTree.FunctionDeclaration | TSESTree.FunctionExpression | TSESTree.ArrowFunctionExpression | null {
+export function getNearestFunctionAncestor(node: TSESTree.Node): FunctionNode | null {
   let current = node.parent ?? null;
   while (current != null) {
     if (ASTUtils.isFunction(current)) return current;

@@ -23,6 +23,20 @@ runTest({
         const sessionStorage = createStorage();
         return sessionStorage;
       }
+    `,
+    // useLocalStorage result used locally, not returned
+    dedent`
+      function Component() {
+        const [value, setValue] = useLocalStorage('key', '');
+        return <div>{value}</div>;
+      }
+    `,
+    // useSessionStorage result used locally, not returned
+    dedent`
+      function Component() {
+        const [value, setValue] = useSessionStorage('key', '');
+        return <div>{value}</div>;
+      }
     `
   ],
   invalid: [
@@ -79,6 +93,31 @@ runTest({
         }
       `,
       errors: [{ messageId: 'session' }]
+    },
+    // return useLocalStorage() directly
+    {
+      code: dedent`
+        function useSharedStorage() {
+          return useLocalStorage('key', '');
+        }
+      `,
+      errors: [{ messageId: 'returnLocalStorage' }]
+    },
+    // return useSessionStorage() directly
+    {
+      code: dedent`
+        function useSharedStorage() {
+          return useSessionStorage('key', '');
+        }
+      `,
+      errors: [{ messageId: 'returnSessionStorage' }]
+    },
+    // arrow function returning useLocalStorage
+    {
+      code: dedent`
+        const useShared = () => useLocalStorage('key', '');
+      `,
+      errors: [{ messageId: 'returnLocalStorage' }]
     }
   ]
 }, {}, false);

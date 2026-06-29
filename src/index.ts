@@ -57,6 +57,8 @@ import reactPreferPropsWithChildren from './rules/react-prefer-props-with-childr
 import reactPreferFoxactUseAbortableEffect from './rules/react-prefer-foxact-use-abortable-effect';
 import preferFoxtsErrorUtil from './rules/prefer-foxts-error-util';
 import preferFoxtsArrayUtils from './rules/prefer-foxts-array-utils';
+import reactNoUseStateAsRef from './rules/react-no-use-state-as-ref';
+import reactNoPerformanceImpactingArrayFind from './rules/react-no-performance-impacting-array-find';
 
 const plugin = {
   configs: {
@@ -151,7 +153,9 @@ const plugin = {
         'sukka/react-prefer-foxact-compose-context-provider': 'error',
         'sukka/react-no-render-function-prop': 'error',
         'sukka/react-prefer-props-with-children': 'error',
-        'sukka/react-prefer-foxact-use-abortable-effect': 'error'
+        'sukka/react-prefer-foxact-use-abortable-effect': 'error',
+        'sukka/react-no-use-state-as-ref': 'error',
+        'sukka/react-no-performance-impacting-array-find': 'warn'
       } as Linter.RulesRecord
     }
   },
@@ -212,7 +216,9 @@ const plugin = {
     'react-prefer-props-with-children': reactPreferPropsWithChildren,
     'react-prefer-foxact-use-abortable-effect': reactPreferFoxactUseAbortableEffect,
     'prefer-foxts-error-util': preferFoxtsErrorUtil,
-    'prefer-foxts-array-utils': preferFoxtsArrayUtils
+    'prefer-foxts-array-utils': preferFoxtsArrayUtils,
+    'react-no-use-state-as-ref': reactNoUseStateAsRef,
+    'react-no-performance-impacting-array-find': reactNoPerformanceImpactingArrayFind
   }
 } as const;
 

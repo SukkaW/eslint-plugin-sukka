@@ -45,12 +45,28 @@ export default createRule({
     },
     messages: {
       local: 'Do not use `localStorage` in React code. Use `foxact/use-local-storage` or `foxact/create-local-storage-state` instead.',
-      session: 'Do not use `sessionStorage` in React code. Use `foxact/use-session-storage` or `foxact/create-session-storage-state` instead.'
+      session: 'Do not use `sessionStorage` in React code. Use `foxact/use-session-storage` or `foxact/create-session-storage-state` instead.',
+      returnLocalStorage: 'Do not return `useLocalStorage()` directly. If you want to share the storage across multiple components, use `foxact/create-local-storage-state` instead.',
+      returnSessionStorage: 'Do not return `useSessionStorage()` directly. If you want to share the storage across multiple components, use `foxact/create-session-storage-state` instead.'
     },
     schema: []
   },
   create(context) {
     const { sourceCode } = context;
+
+    function checkReturnedStorageHook(reportNode: TSESTree.Node, expression: TSESTree.Expression) {
+      const arg = unwrapExpression(expression);
+      if (arg.type !== AST_NODE_TYPES.CallExpression) return;
+
+      const callee = arg.callee;
+      if (callee.type === AST_NODE_TYPES.Identifier) {
+        if (callee.name === 'useLocalStorage') {
+          context.report({ node: reportNode, messageId: 'returnLocalStorage' });
+        } else if (callee.name === 'useSessionStorage') {
+          context.report({ node: reportNode, messageId: 'returnSessionStorage' });
+        }
+      }
+    }
 
     return {
       MemberExpression(node) {
@@ -66,6 +82,14 @@ export default createRule({
         }
 
         context.report({ node, messageId: kind });
+      },
+      ReturnStatement(node) {
+        if (node.argument == null) return;
+        checkReturnedStorageHook(node, node.argument);
+      },
+      ArrowFunctionExpression(node) {
+        if (node.body.type === AST_NODE_TYPES.BlockStatement) return;
+        checkReturnedStorageHook(node, node.body);
       },
       Identifier(node) {
         if (node.name !== 'localStorage' && node.name !== 'sessionStorage') return;
