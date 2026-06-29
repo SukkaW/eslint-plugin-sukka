@@ -74,6 +74,8 @@ function getFunctionName(node: FunctionNode): string | null {
 
 function isMutableBinding(variable: TSESLint.Scope.Variable): boolean {
   for (const def of variable.defs) {
+    // Function parameter — changes per invocation
+    if (def.type === TSESLint.Scope.DefinitionType.Parameter) return true;
     if (def.type !== TSESLint.Scope.DefinitionType.Variable) continue;
     const kind = def.node.parent.kind;
     if (kind === 'let' || kind === 'var') return true;
@@ -99,18 +101,26 @@ export default createRule({
         if (node.params.length > 0) return;
         if (node.async || node.generator) return;
 
+        const { parent } = node;
+
+        // Object property/method value — likely a callback or API contract
+        if (
+          parent.type === AST_NODE_TYPES.Property
+          || parent.type === AST_NODE_TYPES.MethodDefinition
+        ) return;
+
+        // Callback passed as argument — invoked by external code
+        if (parent.type === AST_NODE_TYPES.CallExpression) return;
+
         const name = getFunctionName(node);
         if (name != null && isFactoryName(name) && returnsFreshMutableObject(node)) return;
 
         // Exported functions may be called from outside with different expectations
-        if (node.type === AST_NODE_TYPES.FunctionDeclaration) {
-          const parent = node.parent;
-          if (
-            parent.type === AST_NODE_TYPES.ExportNamedDeclaration
-            || parent.type === AST_NODE_TYPES.ExportDefaultDeclaration
-          ) {
-            return;
-          }
+        if (node.type === AST_NODE_TYPES.FunctionDeclaration && (
+          parent.type === AST_NODE_TYPES.ExportNamedDeclaration
+          || parent.type === AST_NODE_TYPES.ExportDefaultDeclaration
+        )) {
+          return;
         }
 
         const funcScope = context.sourceCode.getScope(node).childScopes.find((s) => s.block === node)

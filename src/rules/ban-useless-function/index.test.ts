@@ -76,6 +76,59 @@ runTest({
     dedent`
       var config = {};
       function getConfig() { return config; }
+    `,
+    // Getter — invoked by property access
+    dedent`
+      const plugin = {};
+      const obj = {
+        get foo() { return plugin; }
+      };
+    `,
+    // Getter inside as const
+    dedent`
+      const plugin = {};
+      const obj = {
+        configs: {
+          plugins: {
+            get foo() { return plugin; }
+          }
+        }
+      } as const;
+    `,
+    // Callback passed as argument
+    dedent`
+      const plugin = {};
+      [1, 2].forEach(function() { console.log(plugin); });
+    `,
+    // Object method shorthand — likely a callback/handler
+    dedent`
+      const LIMIT = 100;
+      const obj = {
+        onLimit() { return LIMIT; }
+      };
+    `,
+    // const array that gets mutated via .push()
+    dedent`
+      const stack = [];
+      stack.push(1);
+      function peek() { return stack[stack.length - 1]; }
+    `,
+    // const object with property assignment
+    dedent`
+      const state = {};
+      state.count = 0;
+      function getCount() { return state.count; }
+    `,
+    // exported const array — can be mutated cross-file
+    dedent`
+      export const items = [1, 2, 3];
+      function getFirst() { return items[0]; }
+    `,
+    // re-exported const object
+    dedent`
+      const config = { debug: false };
+      export { config };
+      function isDebug() { return config.debug; }
     `
   ],
   invalid: [
@@ -125,16 +178,6 @@ runTest({
     {
       code: dedent`
         function logHello() { console.log("hello"); }
-      `,
-      errors: [{ messageId: 'default' }]
-    },
-    // Object method shorthand
-    {
-      code: dedent`
-        const LIMIT = 100;
-        const obj = {
-          getLimit() { return LIMIT; }
-        };
       `,
       errors: [{ messageId: 'default' }]
     },
