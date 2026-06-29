@@ -65,6 +65,78 @@ export function isComponentOrHookName(name: string): boolean {
   return isComponentName(name) || isHookName(name);
 }
 
+const WRAPPER_COMPONENT_NAMES = new Set(['memo', 'forwardRef']);
+
+export function isWrapperComponentCall(node: TSESTree.CallExpression): boolean {
+  const { callee } = node;
+  if (callee.type === AST_NODE_TYPES.Identifier) {
+    return WRAPPER_COMPONENT_NAMES.has(callee.name);
+  }
+  if (
+    callee.type === AST_NODE_TYPES.MemberExpression
+    && callee.object.type === AST_NODE_TYPES.Identifier
+    && callee.object.name === 'React'
+    && callee.property.type === AST_NODE_TYPES.Identifier
+  ) {
+    return WRAPPER_COMPONENT_NAMES.has(callee.property.name);
+  }
+  return false;
+}
+
+// --- Component detection ---
+
+export function getWrapperComponentName(callExpr: TSESTree.CallExpression): string | null {
+  if (!isWrapperComponentCall(callExpr)) return null;
+
+  const parent = callExpr.parent;
+  if (
+    parent.type === AST_NODE_TYPES.VariableDeclarator
+    && parent.id.type === AST_NODE_TYPES.Identifier
+    && isComponentName(parent.id.name)
+  ) {
+    return parent.id.name;
+  }
+
+  if (parent.type === AST_NODE_TYPES.ExportDefaultDeclaration) {
+    return 'default';
+  }
+
+  return null;
+}
+
+export function getComponentName(node: FunctionNode): string | null {
+  if (node.type === AST_NODE_TYPES.FunctionDeclaration && node.id != null) {
+    return isComponentName(node.id.name) ? node.id.name : null;
+  }
+
+  if (node.type === AST_NODE_TYPES.FunctionExpression && node.id != null && isComponentName(node.id.name)) {
+    return node.id.name;
+  }
+
+  const parent = node.parent;
+
+  if (
+    parent.type === AST_NODE_TYPES.VariableDeclarator
+    && parent.id.type === AST_NODE_TYPES.Identifier
+    && isComponentName(parent.id.name)
+  ) {
+    return parent.id.name;
+  }
+
+  if (
+    parent.type === AST_NODE_TYPES.CallExpression
+    && parent.arguments[0] === node
+  ) {
+    return getWrapperComponentName(parent);
+  }
+
+  if (parent.type === AST_NODE_TYPES.ExportDefaultDeclaration) {
+    return 'default';
+  }
+
+  return null;
+}
+
 // --- AST helpers ---
 const isUseEffectNames = (name: string) => name.startsWith('use') && name.endsWith('Effect');
 

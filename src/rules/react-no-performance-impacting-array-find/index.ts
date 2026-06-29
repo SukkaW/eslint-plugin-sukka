@@ -1,5 +1,5 @@
 import { createRule } from '@/utils/create-eslint-rule';
-import { isComponentName, isComponentOrHookName } from '@/utils/react-hooks';
+import { isComponentName, isComponentOrHookName, isWrapperComponentCall } from '@/utils/react-hooks';
 import type { FunctionNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
@@ -18,7 +18,6 @@ function getCalleeName(callExpr: TSESTree.CallExpression): string | null {
 }
 
 const FLAGGED_HOOKS = new Set(['useMemo', 'useCallback']);
-const WRAPPER_NAMES = new Set(['memo', 'forwardRef']);
 
 function isComponentOrHookFunction(node: FunctionNode): boolean {
   if (node.type === AST_NODE_TYPES.FunctionDeclaration && node.id != null) {
@@ -35,13 +34,11 @@ function isComponentOrHookFunction(node: FunctionNode): boolean {
   if (
     parent.type === AST_NODE_TYPES.CallExpression
     && parent.arguments[0] === node
+    && isWrapperComponentCall(parent)
   ) {
-    const calleeName = getCalleeName(parent);
-    if (calleeName != null && WRAPPER_NAMES.has(calleeName)) {
-      const grandparent = parent.parent;
-      if (grandparent.type === AST_NODE_TYPES.VariableDeclarator && grandparent.id.type === AST_NODE_TYPES.Identifier) {
-        return isComponentName(grandparent.id.name);
-      }
+    const grandparent = parent.parent;
+    if (grandparent.type === AST_NODE_TYPES.VariableDeclarator && grandparent.id.type === AST_NODE_TYPES.Identifier) {
+      return isComponentName(grandparent.id.name);
     }
   }
 

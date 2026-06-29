@@ -1,7 +1,6 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import { isUseStateLikeCall } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree } from '@typescript-eslint/types';
 import { ASTUtils } from '@typescript-eslint/utils';
 
 export default createRule({
@@ -41,7 +40,7 @@ export default createRule({
         if (setter == null) return;
 
         // const [value, _setter] = useState(...) — setter is explicitly ignored with underscore prefix
-        if (setter.type === AST_NODE_TYPES.Identifier && setter.name.startsWith('_')) {
+        if (setter.type === AST_NODE_TYPES.Identifier && setter.name[0] === '_') {
           context.report({
             node,
             messageId: 'default',

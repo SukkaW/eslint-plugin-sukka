@@ -162,7 +162,7 @@ export default createRule({
       return (
         variable
         && !isDefaultParameter(ref)
-        && !variable.name.startsWith('_')
+        && variable.name[0] !== '_'
         && !isCompoundAssignment(ref.writeExpr)
         && !isSelfAssignement(ref)
         && !variable.defs.some(

@@ -1,5 +1,5 @@
 import { createRule } from '@/utils/create-eslint-rule';
-import { isComponentName } from '@/utils/react-hooks';
+import { getComponentName } from '@/utils/react-hooks';
 import type { FunctionNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
@@ -11,71 +11,6 @@ const JSX_RETURN_TYPE_NAMES = new Set([
   'JSX.Element',
   'Element'
 ]);
-
-function getComponentName(node: FunctionNode): string | null {
-  if (node.type === AST_NODE_TYPES.FunctionDeclaration && node.id != null) {
-    return isComponentName(node.id.name) ? node.id.name : null;
-  }
-
-  if (node.type === AST_NODE_TYPES.FunctionExpression && node.id != null && isComponentName(node.id.name)) {
-    return node.id.name;
-  }
-
-  const parent = node.parent;
-  if (!parent) return null;
-
-  if (
-    parent.type === AST_NODE_TYPES.VariableDeclarator
-    && parent.id.type === AST_NODE_TYPES.Identifier
-    && isComponentName(parent.id.name)
-  ) {
-    return parent.id.name;
-  }
-
-  // memo(function Comp(...)) / forwardRef(function Comp(...))
-  if (
-    parent.type === AST_NODE_TYPES.CallExpression
-    && parent.arguments[0] === node
-  ) {
-    return getWrapperComponentName(parent);
-  }
-
-  // export default function(props: ...) {} / export default (props: ...) => {}
-  if (parent.type === AST_NODE_TYPES.ExportDefaultDeclaration) {
-    return 'default';
-  }
-
-  return null;
-}
-
-function getWrapperComponentName(callExpr: TSESTree.CallExpression): string | null {
-  const { callee } = callExpr;
-
-  const isMemoOrForwardRef =
-    (callee.type === AST_NODE_TYPES.Identifier && (callee.name === 'memo' || callee.name === 'forwardRef'))
-    || (callee.type === AST_NODE_TYPES.MemberExpression
-      && callee.object.type === AST_NODE_TYPES.Identifier
-      && callee.object.name === 'React'
-      && callee.property.type === AST_NODE_TYPES.Identifier
-      && (callee.property.name === 'memo' || callee.property.name === 'forwardRef'));
-
-  if (!isMemoOrForwardRef) return null;
-
-  const parent = callExpr.parent;
-  if (
-    parent.type === AST_NODE_TYPES.VariableDeclarator
-    && parent.id.type === AST_NODE_TYPES.Identifier
-    && isComponentName(parent.id.name)
-  ) {
-    return parent.id.name;
-  }
-
-  if (parent.type === AST_NODE_TYPES.ExportDefaultDeclaration) {
-    return 'default';
-  }
-
-  return null;
-}
 
 function getPropsTypeMembers(
   node: FunctionNode,

@@ -1,35 +1,9 @@
 import { createRule } from '@/utils/create-eslint-rule';
-import { isComponentName } from '@/utils/react-hooks';
+import { getComponentName } from '@/utils/react-hooks';
 import type { FunctionNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree } from '@typescript-eslint/types';
 
 export type MessageId = 'default';
-
-function isLikelyComponent(node: FunctionNode): boolean {
-  const parent = node.parent as TSESTree.Node | undefined;
-
-  // FunctionDeclaration with uppercase name, but skip `export default function App`
-  if (node.type === AST_NODE_TYPES.FunctionDeclaration) {
-    if (node.id == null || !isComponentName(node.id.name)) return false;
-    return parent?.type !== AST_NODE_TYPES.ExportDefaultDeclaration;
-  }
-
-  // FunctionExpression with uppercase name: function App(props) {} passed to memo/forwardRef
-  if (node.type === AST_NODE_TYPES.FunctionExpression && node.id != null) {
-    return isComponentName(node.id.name);
-  }
-
-  // Arrow function assigned to uppercase variable: const App = (props) => {}
-  if (parent?.type === AST_NODE_TYPES.VariableDeclarator) {
-    const id = parent.id;
-    if (id.type === AST_NODE_TYPES.Identifier) {
-      return isComponentName(id.name);
-    }
-  }
-
-  return false;
-}
 
 export default createRule({
   name: 'react-prefer-destructuring-assignment',
@@ -47,7 +21,10 @@ export default createRule({
     const components: FunctionNode[] = [];
 
     function collectComponent(node: FunctionNode) {
-      if (!isLikelyComponent(node)) return;
+      const name = getComponentName(node);
+      if (name == null || name === 'default') return;
+      // Skip `export default function App` — props.foo is acceptable there
+      if (node.parent.type === AST_NODE_TYPES.ExportDefaultDeclaration) return;
       const [props] = node.params;
       if (props?.type !== AST_NODE_TYPES.Identifier) return;
       components.push(node);
