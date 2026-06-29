@@ -19,7 +19,10 @@ export default createRule({
       'CallExpression[callee.type="MemberExpression"][callee.property.name="includes"]': (node: TSESTree.CallExpression) => {
         const callee = node.callee as TSESTree.MemberExpression;
         const staticValue = ASTUtils.getStaticValue(callee.object, context.sourceCode.getScope(callee.object));
-        if (staticValue != null && Array.isArray(staticValue.value)) {
+        // length > 0: getStaticValue resolves the *initial* value and ignores mutations,
+        // so `const arr = []; arr.push(x); arr.includes(y)` resolves to []. Skip empty
+        // arrays since they are almost certainly populated dynamically.
+        if (staticValue != null && Array.isArray(staticValue.value) && staticValue.value.length > 0) {
           context.report({ node, messageId: 'default' });
         }
       }
