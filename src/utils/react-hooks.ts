@@ -167,6 +167,19 @@ export function isUseStateLikeCall(node: TSESTree.Node): node is TSESTree.CallEx
   return false;
 }
 
+export function isUseStateCall(node: TSESTree.Node): node is TSESTree.CallExpression {
+  if (node.type !== AST_NODE_TYPES.CallExpression) return false;
+  const { callee } = node;
+  if (callee.type === AST_NODE_TYPES.Identifier) return callee.name === 'useState';
+  if (
+    callee.type === AST_NODE_TYPES.MemberExpression
+    && callee.property.type === AST_NODE_TYPES.Identifier
+  ) {
+    return callee.property.name === 'useState';
+  }
+  return false;
+}
+
 export function findParentNode(
   node: TSESTree.Node,
   predicate: (n: TSESTree.Node) => boolean

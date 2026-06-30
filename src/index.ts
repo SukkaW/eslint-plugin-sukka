@@ -59,6 +59,7 @@ import preferFoxtsErrorUtil from './rules/prefer-foxts-error-util';
 import preferFoxtsArrayUtils from './rules/prefer-foxts-array-utils';
 import avoidStringStartsWithSingleChar from './rules/avoid-string-starts-with-single-char';
 import reactNoUseStateAsRef from './rules/react-no-use-state-as-ref';
+import reactNoUseStateObject from './rules/react-no-use-state-object';
 import reactNoPerformanceImpactingArrayFind from './rules/react-no-performance-impacting-array-find';
 import noRegexInFunction from './rules/no-regex-in-function';
 import noConstantArrayIncludes from './rules/no-constant-array-includes';
@@ -113,6 +114,7 @@ const plugin = {
         'sukka/avoid-string-starts-with-single-char': 'error',
         'sukka/no-regex-in-function': 'warn',
         'sukka/no-constant-array-includes': 'warn',
+        'sukka/react-no-use-state-object': 'warn',
         'sukka/track-todo-fixme-comment': 'warn'
       } as Linter.RulesRecord
     },
@@ -225,6 +227,7 @@ const plugin = {
     'prefer-foxts-array-utils': preferFoxtsArrayUtils,
     'avoid-string-starts-with-single-char': avoidStringStartsWithSingleChar,
     'react-no-use-state-as-ref': reactNoUseStateAsRef,
+    'react-no-use-state-object': reactNoUseStateObject,
     'react-no-performance-impacting-array-find': reactNoPerformanceImpactingArrayFind,
     'no-regex-in-function': noRegexInFunction,
     'no-constant-array-includes': noConstantArrayIncludes
