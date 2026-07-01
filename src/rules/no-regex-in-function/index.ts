@@ -11,7 +11,7 @@ export default createRule({
       description: 'Enforce hoisting literal regex to module level to avoid re-creation on every call.'
     },
     messages: {
-      default: 'Enforce hoisting literal regex to module level to avoid re-creation on every call.'
+      default: 'Hoisting literal regex to module level to avoid re-creation on every call. It is recommend to name the regex variable with `RE_XXX` or `rXxx` format.'
     },
     schema: []
   },
