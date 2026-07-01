@@ -53,6 +53,19 @@ function isAnyOrUnknown(type: ts.Type): boolean {
     || (flags & 32768) !== 0; // Undefined (for undeclared variables)
 }
 
+function isConfirmedErrorType(
+  node: TSESTree.Node,
+  services: ParserServicesWithTypeInformation | null
+): boolean {
+  if (services == null) return false;
+  try {
+    const type = getTypeFromTreeNode(node, services);
+    return isErrorType(type);
+  } catch {
+    return false;
+  }
+}
+
 function isErrorVariable(
   node: TSESTree.Node,
   services: ParserServicesWithTypeInformation | null
@@ -229,15 +242,15 @@ export default createRule({
         }
       },
 
-      // error.message
+      // error.message — only when the type is NOT confirmed Error
       MemberExpression(node) {
         if (
           !node.computed
           && node.property.type === AST_NODE_TYPES.Identifier
           && node.property.name === 'message'
           && isErrorVariable(node.object, typedServices)
-          // Skip if it's part of a deeper access like error.message.includes(...)
           && node.parent.type !== AST_NODE_TYPES.MemberExpression
+          && !isConfirmedErrorType(node.object, typedServices)
         ) {
           context.report({ node, messageId: 'preferExtractErrorMessage' });
         }

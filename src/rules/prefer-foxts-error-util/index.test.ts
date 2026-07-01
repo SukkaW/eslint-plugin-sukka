@@ -47,6 +47,11 @@ runTest({
     dedent`
       const err: string = 'something went wrong';
       String(err);
+    `,
+    // .message on confirmed Error type is fine
+    dedent`
+      declare const e: TypeError;
+      e.message;
     `
   ],
   invalid: [
@@ -148,13 +153,6 @@ runTest({
         class HTTPError extends Error {}
         const e = new HTTPError('fail');
         String(e);
-      `,
-      errors: [{ messageId: 'preferExtractErrorMessage' }]
-    },
-    {
-      code: dedent`
-        declare const e: TypeError;
-        e.message;
       `,
       errors: [{ messageId: 'preferExtractErrorMessage' }]
     }
