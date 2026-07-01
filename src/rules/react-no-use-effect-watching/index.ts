@@ -1,6 +1,6 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import type { RuleContext } from '@/utils/create-eslint-rule';
-import { isUseEffectCall, isUseStateLikeCall } from '@/utils/react-hooks';
+import { isUseEffectCall } from '@/utils/react-hooks';
 import type { FunctionNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
@@ -15,6 +15,34 @@ type FunctionKind =
   | 'immediate'
   | 'other';
 
+function isHookCall(node: TSESTree.Node): node is TSESTree.CallExpression {
+  if (node.type !== AST_NODE_TYPES.CallExpression) return false;
+  const { callee } = node;
+  if (callee.type === AST_NODE_TYPES.Identifier) return callee.name.startsWith('use');
+  if (
+    callee.type === AST_NODE_TYPES.MemberExpression
+    && callee.property.type === AST_NODE_TYPES.Identifier
+  ) {
+    return callee.property.name.startsWith('use');
+  }
+  return false;
+}
+
+// useSetXxx() w/o useSetup()
+const RE_USE_SET = /^useSet[A-Z]/;
+
+function isUseSetCall(node: TSESTree.CallExpression): boolean {
+  const { callee } = node;
+  if (callee.type === AST_NODE_TYPES.Identifier) return RE_USE_SET.test(callee.name);
+  if (
+    callee.type === AST_NODE_TYPES.MemberExpression
+    && callee.property.type === AST_NODE_TYPES.Identifier
+  ) {
+    return RE_USE_SET.test(callee.property.name);
+  }
+  return false;
+}
+
 function isSetStateCallee(
   context: RuleContext<string, unknown[]>,
   node: TSESTree.Node
@@ -28,11 +56,22 @@ function isSetStateCallee(
   if (def?.type !== TSESLint.Scope.DefinitionType.Variable) return false;
 
   const declarator = def.node;
-  if (declarator.id.type !== AST_NODE_TYPES.ArrayPattern) return false;
-  if (declarator.init == null || !isUseStateLikeCall(declarator.init)) return false;
 
-  // Must be the second element (the setter)
-  return declarator.id.elements[1] === def.name;
+  // const [value, setter] = useXxx(...) — setter is the second element
+  if (
+    declarator.id.type === AST_NODE_TYPES.ArrayPattern
+    && declarator.init != null
+    && isHookCall(declarator.init)
+    && declarator.id.elements[1] === def.name
+  ) {
+    return true;
+  }
+
+  // const setter = useSetXxx(...)
+  return declarator.id.type === AST_NODE_TYPES.Identifier
+    && declarator.init != null
+    && isHookCall(declarator.init)
+    && isUseSetCall(declarator.init);
 }
 
 function getFunctionKind(node: FunctionNode): FunctionKind {

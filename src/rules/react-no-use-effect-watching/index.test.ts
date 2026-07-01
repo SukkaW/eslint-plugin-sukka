@@ -105,6 +105,60 @@ runTest({
         }
       `,
       errors: [{ messageId: 'watchState' }]
+    },
+    // setState inside if/else — still synchronous
+    {
+      code: dedent`
+        import { useEffect, useState } from "react";
+
+        function Component({ resolvedId }) {
+          const [storedId, setStoredId] = useState(null);
+          useEffect(() => {
+            if (resolvedId && resolvedId !== storedId) {
+              setStoredId(resolvedId);
+            }
+          }, [resolvedId, storedId, setStoredId]);
+          return null;
+        }
+      `,
+      errors: [{ messageId: 'watchStateWithProps' }]
+    },
+    // Setter from useLocalStorage (non-useState hook)
+    {
+      code: dedent`
+        import { useEffect } from "react";
+        import { useLocalStorage } from "some-lib";
+
+        function Component({ resolvedId }) {
+          const [storedId, setStoredId] = useLocalStorage("key", null);
+          useEffect(() => {
+            if (resolvedId && resolvedId !== storedId) {
+              setStoredId(resolvedId);
+            }
+          }, [resolvedId, storedId, setStoredId]);
+          return null;
+        }
+      `,
+      errors: [{ messageId: 'watchStateWithProps' }]
+    },
+    // Setter from useSetXxx() pattern (foxact/create-local-storage-state)
+    {
+      code: dedent`
+        import { useEffect } from "react";
+        import { useValue, useSetValue } from "./storage";
+
+        function Component({ resolvedId }) {
+          const storedId = useValue();
+          const setStoredId = useSetValue();
+          useEffect(() => {
+            if (resolvedId !== storedId) {
+              setStoredId(resolvedId);
+            }
+          }, [resolvedId, storedId, setStoredId]);
+          return null;
+        }
+      `,
+      errors: [{ messageId: 'watchStateWithProps' }]
     }
   ],
   valid: [
