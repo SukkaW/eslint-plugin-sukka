@@ -63,6 +63,7 @@ import reactNoUseStateObject from './rules/react-no-use-state-object';
 import reactNoPerformanceImpactingArrayFind from './rules/react-no-performance-impacting-array-find';
 import noRegexInFunction from './rules/no-regex-in-function';
 import noConstantArrayIncludes from './rules/no-constant-array-includes';
+import preferExportDestructuring from './rules/prefer-export-destructuring';
 
 const plugin = {
   configs: {
@@ -115,6 +116,7 @@ const plugin = {
         'sukka/no-regex-in-function': 'warn',
         'sukka/no-constant-array-includes': 'warn',
         'sukka/react-no-use-state-object': 'warn',
+        'sukka/prefer-export-destructuring': 'warn',
         'sukka/track-todo-fixme-comment': 'warn'
       } as Linter.RulesRecord
     },
@@ -230,7 +232,8 @@ const plugin = {
     'react-no-use-state-object': reactNoUseStateObject,
     'react-no-performance-impacting-array-find': reactNoPerformanceImpactingArrayFind,
     'no-regex-in-function': noRegexInFunction,
-    'no-constant-array-includes': noConstantArrayIncludes
+    'no-constant-array-includes': noConstantArrayIncludes,
+    'prefer-export-destructuring': preferExportDestructuring
   }
 } as const;
 
