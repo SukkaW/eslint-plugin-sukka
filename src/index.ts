@@ -65,6 +65,7 @@ import noRegexInFunction from './rules/no-regex-in-function';
 import noConstantArrayIncludes from './rules/no-constant-array-includes';
 import preferExportDestructuring from './rules/prefer-export-destructuring';
 import noObjectCreateNonNull from './rules/no-object-create-non-null';
+import preferFoxtsObjectSize from './rules/prefer-foxts-object-size';
 
 const plugin = {
   configs: {
@@ -113,6 +114,7 @@ const plugin = {
         'sukka/prefer-nullthrow': 'error',
         'sukka/prefer-foxts-error-util': 'error',
         'sukka/prefer-foxts-array-utils': 'error',
+        'sukka/prefer-foxts-object-size': 'error',
         'sukka/avoid-string-starts-with-single-char': 'error',
         'sukka/no-regex-in-function': 'warn',
         'sukka/no-constant-array-includes': 'warn',
@@ -236,7 +238,8 @@ const plugin = {
     'no-regex-in-function': noRegexInFunction,
     'no-constant-array-includes': noConstantArrayIncludes,
     'prefer-export-destructuring': preferExportDestructuring,
-    'no-object-create-non-null': noObjectCreateNonNull
+    'no-object-create-non-null': noObjectCreateNonNull,
+    'prefer-foxts-object-size': preferFoxtsObjectSize
   }
 } as const;
 
