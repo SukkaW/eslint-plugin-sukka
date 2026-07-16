@@ -24,6 +24,7 @@ import { createRule, ensureParserWithTypeInformation } from '@/utils/create-esli
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import { getTypeFromTreeNode } from '../no-for-in-iterable';
+import { getBit } from 'foxts/bitwise';
 
 export default createRule({
   name: 'no-useless-string-operation',
@@ -46,7 +47,7 @@ export default createRule({
     function isString(node: TSESTree.Node) {
       ensureParserWithTypeInformation(services);
       const type = getTypeFromTreeNode(node, services);
-      return (type.flags & ts.TypeFlags.StringLike) !== 0;
+      return getBit(type.flags, ts.TypeFlags.StringLike);
     }
 
     function getVariable(node: TSESTree.Node) {

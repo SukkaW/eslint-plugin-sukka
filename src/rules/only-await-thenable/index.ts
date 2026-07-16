@@ -26,6 +26,7 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import type { ParserServicesWithTypeInformation } from '@typescript-eslint/utils';
 import { getTypeFromTreeNode } from '../no-for-in-iterable';
+import { getBit } from 'foxts/bitwise';
 
 export default createRule({
   name: 'only-await-thenable',
@@ -107,13 +108,13 @@ function isThenable(type: ts.Type) {
 }
 
 function isAny(type: ts.Type) {
-  return Boolean(type.flags & tsTypeFlags.Any);
+  return getBit(type.flags, tsTypeFlags.Any);
 }
 
 function isUnknown(type: ts.Type) {
-  return Boolean(type.flags & tsTypeFlags.Unknown);
+  return getBit(type.flags, tsTypeFlags.Unknown);
 }
 
 function isUnion(type: ts.Type) {
-  return Boolean(type.flags & tsTypeFlags.Union);
+  return getBit(type.flags, tsTypeFlags.Union);
 }

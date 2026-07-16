@@ -66,6 +66,8 @@ import noConstantArrayIncludes from './rules/no-constant-array-includes';
 import preferExportDestructuring from './rules/prefer-export-destructuring';
 import noObjectCreateNonNull from './rules/no-object-create-non-null';
 import preferFoxtsObjectSize from './rules/prefer-foxts-object-size';
+import preferFoxtsCastArray from './rules/prefer-foxts-cast-array';
+import preferFoxtsBitwise from './rules/prefer-foxts-bitwise';
 
 const plugin = {
   configs: {
@@ -115,6 +117,8 @@ const plugin = {
         'sukka/prefer-foxts-error-util': 'error',
         'sukka/prefer-foxts-array-utils': 'error',
         'sukka/prefer-foxts-object-size': 'error',
+        'sukka/prefer-foxts-cast-array': 'error',
+        'sukka/prefer-foxts-bitwise': 'error',
         'sukka/avoid-string-starts-with-single-char': 'error',
         'sukka/no-regex-in-function': 'warn',
         'sukka/no-constant-array-includes': 'warn',
@@ -239,7 +243,9 @@ const plugin = {
     'no-constant-array-includes': noConstantArrayIncludes,
     'prefer-export-destructuring': preferExportDestructuring,
     'no-object-create-non-null': noObjectCreateNonNull,
-    'prefer-foxts-object-size': preferFoxtsObjectSize
+    'prefer-foxts-object-size': preferFoxtsObjectSize,
+    'prefer-foxts-cast-array': preferFoxtsCastArray,
+    'prefer-foxts-bitwise': preferFoxtsBitwise
   }
 } as const;
 

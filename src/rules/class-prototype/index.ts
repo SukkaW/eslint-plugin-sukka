@@ -24,6 +24,7 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import { SymbolFlags as tsSymbolFlags } from 'typescript';
 import type { TSESTree } from '@typescript-eslint/types';
 import type { ParserServices } from '@typescript-eslint/utils';
+import { getBit } from 'foxts/bitwise';
 
 export default createRule({
   name: 'class-prototype',
@@ -74,7 +75,7 @@ function isFunctionType(node: TSESTree.Node, services: Partial<ParserServices> |
   const type = services.program.getTypeChecker().getTypeAtLocation(services.esTreeNodeToTSNodeMap.get(node));
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- type.symbol can be undefined at runtime despite TS types
-  return !!type.symbol && (type.symbol.flags & tsSymbolFlags.Function) !== 0;
+  return !!type.symbol && getBit(type.symbol.flags, tsSymbolFlags.Function);
 }
 
 const FUNCTION_TYPES = new Set(['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression']);

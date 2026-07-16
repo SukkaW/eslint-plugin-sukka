@@ -1,13 +1,11 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import { isGlobalMemberAccess } from '@/utils/ast';
+import { ensureNamedImport } from '@/utils/ensure-import';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
-import type { RuleFix, RuleFixer } from '@typescript-eslint/utils/ts-eslint';
 
 const IS_OBJECT_EMPTY_SOURCE = 'foxts/is-object-empty';
-const IS_OBJECT_EMPTY_IMPORT = 'import { isObjectEmpty } from \'foxts/is-object-empty\';\n';
 const KEY_LENGTH_SOURCE = 'foxts/property-count';
-const KEY_LENGTH_IMPORT = 'import { keyLength } from \'foxts/property-count\';\n';
 
 // Given `Object.keys(x).length <op> <value>`, decide whether the comparison is an
 // emptiness check: "is empty" (true), "is not empty" (false), or neither (null).
@@ -88,8 +86,6 @@ export default createRule({
     schema: []
   },
   create(context) {
-    const existingImports = new Set<string>();
-
     // Returns the target object node if `node` is `Object.keys(x).length`, else null.
     function getKeysLengthTarget(node: TSESTree.MemberExpression): TSESTree.Expression | null {
       if (
@@ -110,31 +106,12 @@ export default createRule({
       return arg;
     }
 
-    function *ensureImport(fixer: RuleFixer, source: string, text: string): Generator<RuleFix> {
-      if (existingImports.has(source)) return;
-      existingImports.add(source);
-
-      const program = context.sourceCode.ast;
-      const lastImport = program.body.findLast((s) => s.type === AST_NODE_TYPES.ImportDeclaration);
-      if (lastImport) {
-        yield fixer.insertTextAfter(lastImport, '\n' + text);
-      } else {
-        yield fixer.insertTextBefore(program.body[0], text);
-      }
-    }
-
     function argText(target: TSESTree.Expression): string {
       const text = context.sourceCode.getText(target);
       return target.type === AST_NODE_TYPES.SequenceExpression ? `(${text})` : text;
     }
 
     return {
-      ImportDeclaration(node) {
-        if (typeof node.source.value === 'string') {
-          existingImports.add(node.source.value);
-        }
-      },
-
       MemberExpression(node) {
         const target = getKeysLengthTarget(node);
         if (target == null) return;
@@ -146,7 +123,7 @@ export default createRule({
             node: unary,
             messageId: 'preferIsObjectEmpty',
             *fix(fixer) {
-              yield *ensureImport(fixer, IS_OBJECT_EMPTY_SOURCE, IS_OBJECT_EMPTY_IMPORT);
+              yield *ensureNamedImport(fixer, context.sourceCode, IS_OBJECT_EMPTY_SOURCE, 'isObjectEmpty');
               yield fixer.replaceText(unary, `isObjectEmpty(${argText(target)})`);
             }
           });
@@ -161,7 +138,7 @@ export default createRule({
             node: comparison,
             messageId: 'preferIsObjectEmpty',
             *fix(fixer) {
-              yield *ensureImport(fixer, IS_OBJECT_EMPTY_SOURCE, IS_OBJECT_EMPTY_IMPORT);
+              yield *ensureNamedImport(fixer, context.sourceCode, IS_OBJECT_EMPTY_SOURCE, 'isObjectEmpty');
               yield fixer.replaceText(comparison, `${isEmpty ? '' : '!'}isObjectEmpty(${argText(target)})`);
             }
           });
@@ -173,7 +150,7 @@ export default createRule({
           node,
           messageId: 'preferKeyLength',
           *fix(fixer) {
-            yield *ensureImport(fixer, KEY_LENGTH_SOURCE, KEY_LENGTH_IMPORT);
+            yield *ensureNamedImport(fixer, context.sourceCode, KEY_LENGTH_SOURCE, 'keyLength');
             yield fixer.replaceText(node, `keyLength(${argText(target)})`);
           }
         });

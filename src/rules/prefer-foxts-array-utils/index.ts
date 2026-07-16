@@ -1,4 +1,5 @@
 import { createRule } from '@/utils/create-eslint-rule';
+import { ensureNamedImport } from '@/utils/ensure-import';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 
@@ -29,14 +30,7 @@ export default createRule({
     schema: []
   },
   create(context) {
-    let hasAppendImport = false;
-
     return {
-      ImportDeclaration(node) {
-        if (node.source.value === 'foxts/append-array-in-place') {
-          hasAppendImport = true;
-        }
-      },
       CallExpression(node) {
         if (!isPushCall(node) || !hasSpreadArgument(node)) return;
 
@@ -46,20 +40,7 @@ export default createRule({
           node,
           messageId: 'noSpreadInPush',
           *fix(fixer) {
-            // Build import if needed
-            if (!hasAppendImport) {
-              const program = context.sourceCode.ast;
-              const lastImport = program.body.findLast(
-                (s) => s.type === AST_NODE_TYPES.ImportDeclaration
-              );
-              const importText = 'import { appendArrayInPlace } from \'foxts/append-array-in-place\';\n';
-              if (lastImport) {
-                yield fixer.insertTextAfter(lastImport, '\n' + importText);
-              } else {
-                yield fixer.insertTextBefore(program.body[0], importText);
-              }
-              hasAppendImport = true;
-            }
+            yield *ensureNamedImport(fixer, context.sourceCode, 'foxts/append-array-in-place', 'appendArrayInPlace');
 
             // Group arguments into runs:
             // - consecutive non-spread args become one push() call

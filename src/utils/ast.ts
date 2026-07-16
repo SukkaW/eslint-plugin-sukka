@@ -15,6 +15,16 @@ export function isGlobalReference(
   return variable == null || variable.defs.length === 0;
 }
 
+// Identifier / this, or a non-computed member chain on one — an expression
+// that is cheap and side-effect-free to repeat in an autofix.
+export function isSimpleTarget(node: TSESTree.Node): boolean {
+  let current = node;
+  while (current.type === AST_NODE_TYPES.MemberExpression && !current.computed) {
+    current = current.object;
+  }
+  return current.type === AST_NODE_TYPES.Identifier || current.type === AST_NODE_TYPES.ThisExpression;
+}
+
 export function unwrapExpression(node: TSESTree.Expression): TSESTree.Expression {
   let current = node;
   while (true) {

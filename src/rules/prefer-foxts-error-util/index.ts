@@ -5,6 +5,7 @@ import type { TSESTree } from '@typescript-eslint/types';
 import type { ParserServicesWithTypeInformation } from '@typescript-eslint/utils';
 import type * as ts from 'typescript';
 import { getTypeFromTreeNode } from '../no-for-in-iterable';
+import { getBit } from 'foxts/bitwise';
 
 const ERROR_LIKE_NAMES = new Set(['err', 'error', 'e', 'ex', 'exception']);
 
@@ -48,9 +49,9 @@ function looksLikeErrorVariable(node: TSESTree.Node): boolean {
 
 function isAnyOrUnknown(type: ts.Type): boolean {
   const flags = type.getFlags();
-  return (flags & 1) !== 0 // Any
-    || (flags & 2) !== 0 // Unknown
-    || (flags & 32768) !== 0; // Undefined (for undeclared variables)
+  return getBit(flags, 1) // Any
+    || getBit(flags, 2) // Unknown
+    || getBit(flags, 32768); // Undefined (for undeclared variables)
 }
 
 function isConfirmedErrorType(
