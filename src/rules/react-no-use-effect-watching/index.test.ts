@@ -185,6 +185,22 @@ runTest({
         }
       `,
       errors: [{ messageId: 'watchStateWithProps' }]
+    },
+    {
+      code: dedent`
+        function DirectiveStatePlugin({
+          directiveControls,
+          disabled,
+        }: Pick<ComposerEditorProps, 'directiveControls' | 'disabled'>): null {
+          const [editor] = useLexicalComposerContext();
+          useEffect(() => {
+            const store = directiveStateFor(editor);
+            store.setState({ directiveControls, disabled });
+          }, [editor, directiveControls, disabled]);
+          return null;
+        }
+      `,
+      errors: [{ messageId: 'watchStateWithProps' }]
     }
   ],
   valid: [

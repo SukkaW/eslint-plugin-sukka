@@ -1,4 +1,5 @@
 import type { RuleContext } from '@/utils/create-eslint-rule';
+import { walkNodes } from '@/utils/ast';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import { TSESLint, ASTUtils } from '@typescript-eslint/utils';
@@ -223,11 +224,19 @@ const RE_SETTER_NAME = /^set[A-Z]/;
 
 // Whether `id` names a value that is "reactive origin" — it comes from a hook
 // return, or is a prop/argument of a component or custom hook (which in turn is
-// almost always a hook return passed down from a parent). Such values carry the
-// same staleness/identity concerns as local state.
-function isReactiveOriginIdentifier(sourceCode: TSESLint.SourceCode, id: TSESTree.Identifier): boolean {
+// almost always a hook return passed down from a parent), or is derived from
+// such a value (e.g. `const store = storeFor(editor)` where `editor` is a hook
+// return). Such values carry the same staleness/identity concerns as state.
+function isReactiveOriginIdentifier(
+  sourceCode: TSESLint.SourceCode,
+  id: TSESTree.Identifier,
+  visited = new Set<TSESLint.Scope.Variable>()
+): boolean {
   const variable = ASTUtils.findVariable(sourceCode.getScope(id), id.name);
-  const def = variable?.defs.at(0);
+  if (variable == null || visited.has(variable)) return false;
+  visited.add(variable);
+
+  const def = variable.defs.at(0);
   if (def == null) return false;
 
   // Prop / custom-hook argument
@@ -235,10 +244,24 @@ function isReactiveOriginIdentifier(sourceCode: TSESLint.SourceCode, id: TSESTre
     return ASTUtils.isFunction(def.node) && isComponentOrHookFunction(def.node);
   }
 
-  // Binding whose initializer is a hook call
-  return def.type === TSESLint.Scope.DefinitionType.Variable
-    && def.node.init != null
-    && isHookCall(def.node.init);
+  if (def.type !== TSESLint.Scope.DefinitionType.Variable || def.node.init == null) return false;
+
+  // Directly a hook return
+  if (isHookCall(def.node.init)) return true;
+
+  // Derived from a reactive origin — any identifier referenced in the
+  // initializer that is itself a reactive origin makes this one too.
+  let derived = false;
+  walkNodes(def.node.init, sourceCode.visitorKeys, (n) => {
+    if (derived) return false;
+    // don't descend into nested functions — those are their own scope
+    if (n !== def.node.init && ASTUtils.isFunction(n)) return false;
+    if (n.type === AST_NODE_TYPES.Identifier && n.name !== id.name && isReactiveOriginIdentifier(sourceCode, n, visited)) {
+      derived = true;
+      return false;
+    }
+  });
+  return derived;
 }
 
 /**
