@@ -74,6 +74,9 @@ export default createRule({
       BinaryExpression(node) {
         // a | b → setBit(a, b)
         if (node.operator === '|') {
+          // `x | 0` / `0 | x` is the truncate-to-int32 idiom, not a bit set —
+          // it intends `Math.trunc`, so leave it alone.
+          if (isZeroLiteral(node.left) || isZeroLiteral(node.right)) return;
           report(node, '|', 'setBit', node, [node.left, node.right]);
           return;
         }

@@ -38,7 +38,11 @@ runTest({
     // Already using the utils
     'getBit(flags, MASK)',
     'setBit(flags, MASK)',
-    'bitCount(x)'
+    'bitCount(x)',
+    // `| 0` is the truncate-to-int32 idiom, not a bit set — whitelisted
+    'a | 0',
+    '0 | a',
+    'const truncated = x | 0;'
   ],
   invalid: [
     // ── getBit / missingBit ────────────────────────────────────────────────
@@ -113,12 +117,6 @@ runTest({
       code: 'flags &= ~MASK;',
       output: 'import { deleteBit } from \'foxts/bitwise\';\nflags = deleteBit(flags, MASK);',
       errors: [{ messageId: 'default', data: { operator: '&=', util: 'deleteBit' } }]
-    },
-    // The |0 truncation trick still maps onto setBit(x, 0) (runtime-identical)
-    {
-      code: 'const truncated = x | 0;',
-      output: 'import { setBit } from \'foxts/bitwise\';\nconst truncated = setBit(x, 0);',
-      errors: [{ messageId: 'default', data: { operator: '|', util: 'setBit' } }]
     },
     // Member-expression compound assignment — has a counterpart, but repeating
     // the target may trigger getters: report without fix
