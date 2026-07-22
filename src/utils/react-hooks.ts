@@ -180,6 +180,97 @@ export function isUseStateCall(node: TSESTree.Node): node is TSESTree.CallExpres
   return false;
 }
 
+export function getHookCalleeName(node: TSESTree.CallExpression): string | null {
+  const { callee } = node;
+  if (callee.type === AST_NODE_TYPES.Identifier) return callee.name;
+  if (
+    callee.type === AST_NODE_TYPES.MemberExpression
+    && callee.property.type === AST_NODE_TYPES.Identifier
+  ) {
+    return callee.property.name;
+  }
+  return null;
+}
+
+// Any `useXxx(...)` / `React.useXxx(...)` call
+export function isHookCall(node: TSESTree.Node): node is TSESTree.CallExpression {
+  if (node.type !== AST_NODE_TYPES.CallExpression) return false;
+  return getHookCalleeName(node)?.startsWith('use') === true;
+}
+
+// Whether the function is (named like) a React component or a custom hook
+export function isComponentOrHookFunction(node: FunctionNode): boolean {
+  // Components, incl. memo/forwardRef wrappers and export default
+  if (getComponentName(node) != null) return true;
+
+  let name: string | null = null;
+  if (
+    (node.type === AST_NODE_TYPES.FunctionDeclaration || node.type === AST_NODE_TYPES.FunctionExpression)
+    && node.id != null
+  ) {
+    name = node.id.name;
+  } else if (
+    node.parent.type === AST_NODE_TYPES.VariableDeclarator
+    && node.parent.id.type === AST_NODE_TYPES.Identifier
+  ) {
+    name = node.parent.id.name;
+  }
+  return name != null && isHookName(name);
+}
+
+// a setXxx name (state setter / store action by convention)
+const RE_SETTER_NAME = /^set[A-Z]/;
+
+// Whether `id` names a value that is "reactive origin" — it comes from a hook
+// return, or is a prop/argument of a component or custom hook (which in turn is
+// almost always a hook return passed down from a parent). Such values carry the
+// same staleness/identity concerns as local state.
+function isReactiveOriginIdentifier(sourceCode: TSESLint.SourceCode, id: TSESTree.Identifier): boolean {
+  const variable = ASTUtils.findVariable(sourceCode.getScope(id), id.name);
+  const def = variable?.defs.at(0);
+  if (def == null) return false;
+
+  // Prop / custom-hook argument
+  if (def.type === TSESLint.Scope.DefinitionType.Parameter) {
+    return ASTUtils.isFunction(def.node) && isComponentOrHookFunction(def.node);
+  }
+
+  // Binding whose initializer is a hook call
+  return def.type === TSESLint.Scope.DefinitionType.Variable
+    && def.node.init != null
+    && isHookCall(def.node.init);
+}
+
+/**
+ * Whether `node` (a call's callee) is a state setter. A setter is a `set*`-named
+ * function reached from a reactive origin (a hook return, or a prop passed down
+ * from a parent — which is itself typically a hook return):
+ * - `const setValue = useX(...)` / `const [v, setValue] = useX(...)` / `{ setValue }`
+ * - `setValue` received as a prop: `function C({ setValue }) { setValue(...) }`
+ * - `store.setValue(...)` where `store` is a hook return or prop
+ */
+export function isSetStateCallee(
+  sourceCode: TSESLint.SourceCode,
+  node: TSESTree.Node
+): boolean {
+  // `obj.setXxx(...)` — a setter method on a reactive-origin object
+  if (
+    node.type === AST_NODE_TYPES.MemberExpression
+    && !node.computed
+    && node.property.type === AST_NODE_TYPES.Identifier
+    && RE_SETTER_NAME.test(node.property.name)
+    && node.object.type === AST_NODE_TYPES.Identifier
+  ) {
+    return isReactiveOriginIdentifier(sourceCode, node.object);
+  }
+
+  // `setXxx(...)` — a setter identifier
+  if (node.type !== AST_NODE_TYPES.Identifier) return false;
+  if (!RE_SETTER_NAME.test(node.name)) return false;
+
+  return isReactiveOriginIdentifier(sourceCode, node);
+}
+
 export function findParentNode(
   node: TSESTree.Node,
   predicate: (n: TSESTree.Node) => boolean

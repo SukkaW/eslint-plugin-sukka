@@ -68,6 +68,8 @@ import noObjectCreateNonNull from './rules/no-object-create-non-null';
 import preferFoxtsObjectSize from './rules/prefer-foxts-object-size';
 import preferFoxtsCastArray from './rules/prefer-foxts-cast-array';
 import preferFoxtsBitwise from './rules/prefer-foxts-bitwise';
+import reactBanPeakViaRef from './rules/react-ban-peak-via-ref';
+import reactDetectPotentialRaceCondition from './rules/react-detect-potential-race-condition';
 
 const plugin = {
   configs: {
@@ -123,6 +125,8 @@ const plugin = {
         'sukka/no-regex-in-function': 'warn',
         'sukka/no-constant-array-includes': 'warn',
         'sukka/react-no-use-state-object': 'warn',
+        'sukka/react-ban-peak-via-ref': 'error',
+        'sukka/react-detect-potential-race-condition': 'warn',
         'sukka/prefer-export-destructuring': 'warn',
         'sukka/no-object-create-non-null': 'warn',
         'sukka/track-todo-fixme-comment': 'warn'
@@ -245,7 +249,9 @@ const plugin = {
     'no-object-create-non-null': noObjectCreateNonNull,
     'prefer-foxts-object-size': preferFoxtsObjectSize,
     'prefer-foxts-cast-array': preferFoxtsCastArray,
-    'prefer-foxts-bitwise': preferFoxtsBitwise
+    'prefer-foxts-bitwise': preferFoxtsBitwise,
+    'react-ban-peak-via-ref': reactBanPeakViaRef,
+    'react-detect-potential-race-condition': reactDetectPotentialRaceCondition
   }
 } as const;
 

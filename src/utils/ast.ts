@@ -5,6 +5,37 @@ import { findVariable } from '@typescript-eslint/utils/ast-utils';
 
 export const RE_NEWLINE = /\r\n?|\n/;
 
+/**
+ * Depth-first walk over a node's descendants (including the node itself),
+ * using ESLint visitor keys so only real AST children are visited. Return
+ * `false` from `visit` to stop descending into that node's children.
+ */
+export function walkNodes(
+  root: TSESTree.Node,
+  visitorKeys: TSESLint.SourceCode.VisitorKeys,
+  visit: (node: TSESTree.Node) => boolean | void
+): void {
+  const stack: TSESTree.Node[] = [root];
+  while (stack.length > 0) {
+    const node = stack.pop()!;
+    if (visit(node) === false) continue;
+
+    const keys = visitorKeys[node.type] as readonly string[] | undefined;
+    if (keys == null) continue;
+    for (const key of keys) {
+      // Array children may be holey (e.g. `ArrayExpression.elements` for `[a, , b]`)
+      const child = node[key as keyof typeof node] as TSESTree.Node | Array<TSESTree.Node | null> | null | undefined;
+      if (Array.isArray(child)) {
+        for (const c of child) {
+          if (c != null) stack.push(c);
+        }
+      } else if (child != null) {
+        stack.push(child);
+      }
+    }
+  }
+}
+
 export function isGlobalReference(
   sourceCode: TSESLint.SourceCode,
   node: TSESTree.Node | null
