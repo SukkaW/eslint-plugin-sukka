@@ -199,11 +199,11 @@ export default createRule({
       return isUseStateLikeCall(init) ? 'state' : 'a hook return value';
     }
 
-    // A change-detection guard: the assignment is gated by an `if` whose test
-    // reads the SAME `<ref>.current`, e.g.
-    //   if (calledRef.current !== pathname) { calledRef.current = pathname; ... }
-    // Here the ref stores the "last handled" value to fire once per change, not
-    // to peek a stale value later — a legitimate pattern.
+    // A change-detection guard: the ref stores the "last handled" value to fire
+    // once per change, not to peek a stale value later — a legitimate pattern.
+    // Two shapes, both keyed on a condition that reads the SAME `<ref>.current`:
+    //   if (calledRef.current !== x) { calledRef.current = x; ... }     // enclosing if
+    //   if (calledRef.current === x) return; calledRef.current = x;     // early return
     function isChangeDetectionGuard(assignment: TSESTree.AssignmentExpression): boolean {
       const target = assignment.left;
       if (
@@ -217,6 +217,8 @@ export default createRule({
       let current: TSESTree.Node = assignment;
       while (current.parent != null) {
         const parent: TSESTree.Node = current.parent;
+
+        // Enclosing `if (ref.current ...) { ...assignment... }`
         if (
           parent.type === AST_NODE_TYPES.IfStatement
           && (parent.consequent === current || parent.alternate === current)
@@ -224,7 +226,29 @@ export default createRule({
         ) {
           return true;
         }
+
+        // Preceding `if (ref.current ...) return;` in the same block
+        if (parent.type === AST_NODE_TYPES.BlockStatement) {
+          for (const stmt of parent.body) {
+            if (stmt.range[1] > current.range[0]) break;
+            if (isEarlyReturnGuard(stmt, refName)) return true;
+          }
+        }
+
         current = parent;
+      }
+      return false;
+    }
+
+    // `if (<reads ref.current>) return;`
+    function isEarlyReturnGuard(stmt: TSESTree.Statement, refName: string): boolean {
+      if (stmt.type !== AST_NODE_TYPES.IfStatement) return false;
+      if (!conditionReadsRefCurrent(stmt.test, refName)) return false;
+
+      const body = stmt.consequent;
+      if (body.type === AST_NODE_TYPES.ReturnStatement) return true;
+      if (body.type === AST_NODE_TYPES.BlockStatement) {
+        return body.body.some((s) => s.type === AST_NODE_TYPES.ReturnStatement);
       }
       return false;
     }

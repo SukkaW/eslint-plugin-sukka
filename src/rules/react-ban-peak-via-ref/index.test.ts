@@ -78,7 +78,7 @@ runTest({
         })
       }
     `,
-    // Common "fire only once when changes" pattern
+    // Common "fire only once when changes" pattern — enclosing if
     dedent`
       function Comp() {
         const pathname = usePathname();
@@ -90,6 +90,20 @@ runTest({
 
             stuffLikeAnalytics();
           }
+        }, [pathname]);
+      }
+    `,
+    // Same pattern with an early-return guard
+    dedent`
+      function Comp() {
+        const pathname = usePathname();
+        const calledPathnameRef = useRef(null);
+
+        useEffect(() => {
+          if (calledPathnameRef.current === pathname) return;
+          calledPathnameRef.current = pathname;
+
+          stuffLikeAnalytics();
         }, [pathname]);
       }
     `,
