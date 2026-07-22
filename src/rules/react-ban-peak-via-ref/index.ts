@@ -4,8 +4,10 @@ import {
   isHookCall,
   getHookCalleeName,
   isUseStateLikeCall,
+  isUseEffectCall,
   isComponentOrHookFunction
 } from '@/utils/react-hooks';
+import type { FunctionNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import { TSESLint, ASTUtils } from '@typescript-eslint/utils';
@@ -24,6 +26,33 @@ function getRootIdentifier(node: TSESTree.Expression): TSESTree.Identifier | nul
     break;
   }
   return current.type === AST_NODE_TYPES.Identifier ? current : null;
+}
+
+// Whether `fn` is the callback of a `use*Effect(...)` call.
+function isEffectCallback(fn: FunctionNode): boolean {
+  const parent = fn.parent;
+  return parent.type === AST_NODE_TYPES.CallExpression
+    && parent.arguments[0] === fn
+    && isUseEffectCall(parent);
+}
+
+// Whether `node` runs inside a callback that is neither the component/hook
+// render body nor an effect — an event handler, `useCallback` body,
+// subscription callback, etc. Writing a reactive snapshot into a ref from there
+// is deliberate imperative capture, not a render/effect-time peek.
+function isInsideNonEffectCallback(node: TSESTree.Node): boolean {
+  let current: TSESTree.Node | undefined = node.parent;
+  while (current != null) {
+    if (ASTUtils.isFunction(current)) {
+      // Reached the component/hook body without crossing a plain callback —
+      // the write is in render phase (still the anti-pattern).
+      if (isComponentOrHookFunction(current)) return false;
+      // An effect callback is still flagged; any other function is a handler.
+      if (!isEffectCallback(current)) return true;
+    }
+    current = current.parent;
+  }
+  return false;
 }
 
 export default createRule({
@@ -229,6 +258,9 @@ export default createRule({
 
         // "Last-seen" change-detection guard — legitimate, not a stale peek
         if (isChangeDetectionGuard(node)) return;
+
+        // Imperative capture inside an event handler / callback — legitimate
+        if (isInsideNonEffectCallback(node)) return;
 
         context.report({ node, messageId: 'default', data: { kind } });
       }

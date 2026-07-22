@@ -92,6 +92,68 @@ runTest({
           }
         }, [pathname]);
       }
+    `,
+    // Capturing a reactive snapshot into a ref from inside an event handler is
+    // deliberate imperative capture, not a render/effect-time peek
+    dedent`
+      import { useRef, useCallback, useState } from 'react';
+      function Component() {
+        const [width, setWidth] = useState(0);
+        const dragRef = useRef(null);
+        const onStart = useCallback(() => {
+          dragRef.current = { start: width };
+        }, [width]);
+        return null;
+      }
+    `,
+    // Same, in a plain inline JSX handler
+    dedent`
+      import { useRef } from 'react';
+      function Component({ value }) {
+        const ref = useRef(null);
+        return <button onClick={() => { ref.current = value; }} />;
+      }
+    `,
+
+    dedent`
+      import { useRef } from 'react';
+
+      export function useTableColumnSizing({
+        table,
+        columnResizeMode = 'onEnd',
+      }) {
+        const [widths, setWidths] = useStateWithDeps<Record<string, number | undefined>>({});
+
+        // The in-flight drag. The document listeners below are attached once per mount
+        // and consult this ref — null means "no drag, bail immediately".
+        const dragRef = useRef<ActiveDrag | null>(null);
+        const startResize = useCallback(
+          (columnId: string, event: React.MouseEvent<HTMLElement> | React.TouchEvent<HTMLElement>) => {
+            const startClientX = getClientX(event.nativeEvent);
+            if (startClientX === undefined) return;
+            event.preventDefault();
+
+            const column = table.columnsById.get(columnId);
+            // measure the th when the column has no override and no declared width
+            const startWidth =
+              widths[columnId] ??
+              column?.width ??
+              (event.currentTarget.closest('th')?.getBoundingClientRect().width || MIN_COLUMN_WIDTH);
+
+            dragRef.current = {
+              columnId,
+              startClientX,
+              startWidth,
+              minWidth: column?.resizeMinWidth ?? MIN_COLUMN_WIDTH,
+              maxWidth: column?.resizeMaxWidth ?? Number.POSITIVE_INFINITY,
+              pendingWidth: null,
+            };
+            setResizing({ resizingId: columnId });
+          },
+          [table, widths, setResizing],
+        );
+        return { startResize };
+      }
     `
   ],
   invalid: [
