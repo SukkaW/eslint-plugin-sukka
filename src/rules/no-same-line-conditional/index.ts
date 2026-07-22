@@ -87,8 +87,8 @@ function getSiblingIfStatements(statements: TSESTree.Node[]): SiblingIfStatement
   return statements.reduce<SiblingIfStatement[]>((siblingsArray, statement, currentIndex) => {
     const previousStatement = statements[currentIndex - 1] as TSESTree.Node | undefined;
     if (
-      statement.type === AST_NODE_TYPES.IfStatement
-      && !!previousStatement
+      !!previousStatement
+      && statement.type === AST_NODE_TYPES.IfStatement
       && previousStatement.type === AST_NODE_TYPES.IfStatement
     ) {
       return [{ first: previousStatement, following: statement }, ...siblingsArray];

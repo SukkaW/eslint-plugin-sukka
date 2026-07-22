@@ -235,7 +235,7 @@ export default createRule({
 
     function onFunctionExit(node: FunctionNode) {
       const entry = functionStack.at(-1);
-      if (entry?.kind === 'setup' && setupFunction === node) {
+      if (setupFunction === node && entry?.kind === 'setup') {
         setupFunction = null;
       }
       functionStack.pop();

@@ -140,7 +140,7 @@ export default createRule({
         return;
       }
       const rhsVal = rhsValues.entries().next().value![0];
-      if (variable && !isWrittenOnlyOnce(variable) && lhsVal === rhsVal) {
+      if (lhsVal === rhsVal && variable && !isWrittenOnlyOnce(variable)) {
         context.report({
           node: node!,
           messageId: 'reviewAssignment',

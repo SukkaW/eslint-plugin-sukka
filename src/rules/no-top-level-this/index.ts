@@ -52,7 +52,7 @@ export default createRule({
         .some(
           ancestor => ancestor.type === AST_NODE_TYPES.ClassDeclaration || ancestor.type === AST_NODE_TYPES.ClassExpression
         );
-      if ((scopeType === TSESLint.Scope.ScopeType.global || scopeType === TSESLint.Scope.ScopeType.module) && !isInsideClass) {
+      if (!isInsideClass && (scopeType === TSESLint.Scope.ScopeType.global || scopeType === TSESLint.Scope.ScopeType.module)) {
         const suggest: Array<TSESLint.SuggestionReportDescriptor<MessageIds>> = [];
         if (!memberExpression.computed) {
           const propertyText = context.sourceCode.getText(memberExpression.property);

@@ -47,7 +47,7 @@ function hasCallOrNew(node: TSESTree.Node): boolean {
       ) {
         return true;
       }
-    } else if (value != null && typeof value === 'object' && 'type' in value && hasCallOrNew(value as TSESTree.Node)) return true;
+    } else if (typeof value === 'object' && value != null && 'type' in value && hasCallOrNew(value as TSESTree.Node)) return true;
   }
   return false;
 }

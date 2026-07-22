@@ -25,7 +25,7 @@ function isConditionLikeReference(node: TSESTree.Identifier, boundary: EffectCal
   let current: TSESTree.Node = node;
   let parent: TSESTree.Node | null = node.parent ?? null;
 
-  while (parent != null && parent !== boundary) {
+  while (parent !== boundary && parent != null) {
     if (
       (parent.type === AST_NODE_TYPES.IfStatement
         || parent.type === AST_NODE_TYPES.ConditionalExpression

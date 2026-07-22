@@ -76,7 +76,7 @@ function isInAsyncContext(
 ): boolean {
   let current: TSESTree.Node | undefined = node;
 
-  while (current != null && current !== effectCallback) {
+  while (current !== effectCallback && current != null) {
     if (ASTUtils.isFunction(current)) {
       // A callback whose invocation is deferred to external/async code
       if (isDeferredCallback(current)) return true;

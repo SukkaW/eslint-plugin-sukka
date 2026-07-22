@@ -40,7 +40,7 @@ export default createRule({
     SwitchStatement(node: TSESTree.SwitchStatement) {
       const { cases } = node;
       const hasDefault = cases.some(x => !x.test);
-      if (cases.length < 2 || (cases.length === 2 && hasDefault)) {
+      if (cases.length < 2 || (hasDefault && cases.length === 2)) {
         const firstToken = context.sourceCode.getFirstToken(node) as TSESTree.Token | null;
         if (firstToken) {
           context.report({

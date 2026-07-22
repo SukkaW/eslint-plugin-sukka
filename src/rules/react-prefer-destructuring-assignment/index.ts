@@ -22,7 +22,7 @@ export default createRule({
 
     function collectComponent(node: FunctionNode) {
       const name = getComponentName(node);
-      if (name == null || name === 'default') return;
+      if (name === 'default' || name == null) return;
       // Skip `export default function App` — props.foo is acceptable there
       if (node.parent.type === AST_NODE_TYPES.ExportDefaultDeclaration) return;
       const [props] = node.params;
