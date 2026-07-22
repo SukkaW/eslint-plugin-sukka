@@ -159,6 +159,32 @@ runTest({
         }
       `,
       errors: [{ messageId: 'watchStateWithProps' }]
+    },
+    // real code from real projects
+    {
+      code: dedent`
+        function Comp({ host }: { host: HostProfile }): React.ReactNode {
+          const setValue = useStore((state) => state.setValue);
+
+          useEffect(() => {
+            setValue(host.id);
+          }, [host.id, setValue]);
+
+          return null;
+        }
+      `,
+      errors: [{ messageId: 'watchStateWithProps' }]
+    },
+    {
+      code: dedent`
+        import { useEffect } from "react";
+        function Comp({ controller, connectionSource }) {
+          useEffect(() => {
+            controller.setSource(connectionSource);
+          }, [connectionSource, controller]);
+        }
+      `,
+      errors: [{ messageId: 'watchStateWithProps' }]
     }
   ],
   valid: [
@@ -314,6 +340,24 @@ runTest({
 
         return null;
       }
+    `,
+    dedent`
+      import { useEffect } from "foxact/use-abortable-effect";
+      import { useImmer } from 'use-immer';
+
+      const [collect, setCollect] = useImmer([]);
+      useEffect((signal) => {
+        function onResp(data) {
+          setCollect(draft => draft.push(data));
+        }
+        (async () => {
+          for (let i = 0; i < 10; i++) {
+            const data = await asyncStuff();
+            if (signal.aborted) return;
+            onResp(data);
+          }
+        })();
+      });
     `
   ]
 }, {}, false);

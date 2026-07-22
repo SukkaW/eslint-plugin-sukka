@@ -1,12 +1,12 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import type { RuleContext } from '@/utils/create-eslint-rule';
-import { isUseEffectCall } from '@/utils/react-hooks';
+import { isUseEffectCall, isSetStateCallee } from '@/utils/react-hooks';
 import type { FunctionNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import { TSESLint, ASTUtils } from '@typescript-eslint/utils';
 
-const WATCH_MESSAGE = 'Do not call the set function of useState synchronously in an effect. Respond directly at where the change happens, or find event handlers/callbacks. If it is a purely derived value, compute it within the render phase w/ `useMemo` instead of having separate states.';
+const WATCH_MESSAGE = 'Do not call the set function of useState synchronously in an effect. Respond directly at where the change happens (the setState call site), or utilize event handlers/callbacks (like onSuccess, onError, onChange, etc.) provided by libraries. If it is a purely derived value, compute it within the render phase w/ `useMemo` (ensure single source of truth) instead of having separate states.';
 const WATCH_WITH_PROPS_MESSAGE = `${WATCH_MESSAGE} If this needs to reset state from outside, always prefer \`key\` to force-reset a component state, or use \`foxact/use-component-will-receive-update\` as your last resort to change internal state based on props change.`;
 
 type FunctionKind =
@@ -14,65 +14,6 @@ type FunctionKind =
   | 'deferred'
   | 'immediate'
   | 'other';
-
-function isHookCall(node: TSESTree.Node): node is TSESTree.CallExpression {
-  if (node.type !== AST_NODE_TYPES.CallExpression) return false;
-  const { callee } = node;
-  if (callee.type === AST_NODE_TYPES.Identifier) return callee.name.startsWith('use');
-  if (
-    callee.type === AST_NODE_TYPES.MemberExpression
-    && callee.property.type === AST_NODE_TYPES.Identifier
-  ) {
-    return callee.property.name.startsWith('use');
-  }
-  return false;
-}
-
-// useSetXxx() w/o useSetup()
-const RE_USE_SET = /^useSet[A-Z]/;
-
-function isUseSetCall(node: TSESTree.CallExpression): boolean {
-  const { callee } = node;
-  if (callee.type === AST_NODE_TYPES.Identifier) return RE_USE_SET.test(callee.name);
-  if (
-    callee.type === AST_NODE_TYPES.MemberExpression
-    && callee.property.type === AST_NODE_TYPES.Identifier
-  ) {
-    return RE_USE_SET.test(callee.property.name);
-  }
-  return false;
-}
-
-function isSetStateCallee(
-  context: RuleContext<string, unknown[]>,
-  node: TSESTree.Node
-): boolean {
-  if (node.type !== AST_NODE_TYPES.Identifier) return false;
-
-  const variable = ASTUtils.findVariable(context.sourceCode.getScope(node), node.name);
-  if (variable == null) return false;
-
-  const def = variable.defs.at(0);
-  if (def?.type !== TSESLint.Scope.DefinitionType.Variable) return false;
-
-  const declarator = def.node;
-
-  // const [value, setter] = useXxx(...) — setter is the second element
-  if (
-    declarator.id.type === AST_NODE_TYPES.ArrayPattern
-    && declarator.init != null
-    && isHookCall(declarator.init)
-    && declarator.id.elements[1] === def.name
-  ) {
-    return true;
-  }
-
-  // const setter = useSetXxx(...)
-  return declarator.id.type === AST_NODE_TYPES.Identifier
-    && declarator.init != null
-    && isHookCall(declarator.init)
-    && isUseSetCall(declarator.init);
-}
 
 function getFunctionKind(node: FunctionNode): FunctionKind {
   // async function body — any setState inside is deferred
@@ -97,9 +38,13 @@ function getFunctionKind(node: FunctionNode): FunctionKind {
     return 'immediate';
   }
 
-  // function declarations in a block are synchronously callable helpers
+  // A named function declaration is only synchronous if it is actually called
+  // from a synchronous context — treat it as 'other' so its setState calls are
+  // deferred and reported only when a synchronous call site is observed. (A
+  // helper invoked solely from a deferred continuation, e.g. after `await`, is
+  // not a synchronous watch.)
   if (node.type === AST_NODE_TYPES.FunctionDeclaration) {
-    return 'immediate';
+    return 'other';
   }
 
   if (parent.type === AST_NODE_TYPES.CallExpression && parent.arguments.includes(node)) {
@@ -327,7 +272,7 @@ export default createRule({
           }
         }
 
-        if (!isSetStateCallee(context, node.callee)) return;
+        if (!isSetStateCallee(context.sourceCode, node.callee)) return;
 
         const entry = functionStack.at(-1);
         if (entry == null) return;

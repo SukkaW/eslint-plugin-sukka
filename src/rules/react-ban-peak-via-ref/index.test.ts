@@ -77,6 +77,21 @@ runTest({
           }
         })
       }
+    `,
+    // Common "fire only once when changes" pattern
+    dedent`
+      function Comp() {
+        const pathname = usePathname();
+        const calledPathnameRef = useRef(null);
+
+        useEffect(() => {
+          if (calledPathnameRef.current !== pathname) {
+            calledPathnameRef.current = pathname;
+
+            stuffLikeAnalytics();
+          }
+        }, [pathname]);
+      }
     `
   ],
   invalid: [

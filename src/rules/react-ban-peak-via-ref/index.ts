@@ -1,5 +1,5 @@
 import { createRule } from '@/utils/create-eslint-rule';
-import { unwrapExpression } from '@/utils/ast';
+import { unwrapExpression, walkNodes } from '@/utils/ast';
 import {
   isHookCall,
   getHookCalleeName,
@@ -170,6 +170,55 @@ export default createRule({
       return isUseStateLikeCall(init) ? 'state' : 'a hook return value';
     }
 
+    // A change-detection guard: the assignment is gated by an `if` whose test
+    // reads the SAME `<ref>.current`, e.g.
+    //   if (calledRef.current !== pathname) { calledRef.current = pathname; ... }
+    // Here the ref stores the "last handled" value to fire once per change, not
+    // to peek a stale value later — a legitimate pattern.
+    function isChangeDetectionGuard(assignment: TSESTree.AssignmentExpression): boolean {
+      const target = assignment.left;
+      if (
+        target.type !== AST_NODE_TYPES.MemberExpression
+        || target.object.type !== AST_NODE_TYPES.Identifier
+      ) {
+        return false;
+      }
+      const refName = target.object.name;
+
+      let current: TSESTree.Node = assignment;
+      while (current.parent != null) {
+        const parent: TSESTree.Node = current.parent;
+        if (
+          parent.type === AST_NODE_TYPES.IfStatement
+          && (parent.consequent === current || parent.alternate === current)
+          && conditionReadsRefCurrent(parent.test, refName)
+        ) {
+          return true;
+        }
+        current = parent;
+      }
+      return false;
+    }
+
+    function conditionReadsRefCurrent(test: TSESTree.Expression, refName: string): boolean {
+      let found = false;
+      walkNodes(test, context.sourceCode.visitorKeys, (n) => {
+        if (found) return false;
+        if (
+          n.type === AST_NODE_TYPES.MemberExpression
+          && !n.computed
+          && n.property.type === AST_NODE_TYPES.Identifier
+          && n.property.name === 'current'
+          && n.object.type === AST_NODE_TYPES.Identifier
+          && n.object.name === refName
+        ) {
+          found = true;
+          return false;
+        }
+      });
+      return found;
+    }
+
     return {
       AssignmentExpression(node) {
         if (node.operator !== '=') return;
@@ -177,6 +226,9 @@ export default createRule({
 
         const kind = classifyExpression(node.right, new Set());
         if (kind == null) return;
+
+        // "Last-seen" change-detection guard — legitimate, not a stale peek
+        if (isChangeDetectionGuard(node)) return;
 
         context.report({ node, messageId: 'default', data: { kind } });
       }
