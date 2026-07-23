@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-sukka",
-  "version": "9.17.1",
+  "version": "9.18.0",
   "description": "SukkaW extended ESLint rules",
   "repository": {
     "type": "git",
