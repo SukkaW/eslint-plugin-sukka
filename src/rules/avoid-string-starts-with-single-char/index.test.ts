@@ -59,6 +59,58 @@ runTest({
       code: String.raw`str.startsWith("\n")`,
       output: String.raw`str[0] === "\n"`,
       errors: [{ messageId: 'default' }]
+    },
+    // Optional call on the receiver keeps the optional index access
+    {
+      code: 'if (str?.startsWith("a")) {}',
+      output: 'if (str?.[0] === "a") {}',
+      errors: [{ messageId: 'default' }]
+    },
+    // Optional call on the method itself
+    {
+      code: 'if (str.startsWith?.("a")) {}',
+      output: 'if (str?.[0] === "a") {}',
+      errors: [{ messageId: 'default' }]
+    },
+    // Negated optional call is always a boolean, so it is fixable anywhere
+    {
+      code: 'const x = !str?.startsWith("a")',
+      output: 'const x = str?.[0] !== "a"',
+      errors: [{ messageId: 'default' }]
+    },
+    // `?.` earlier in the chain already short-circuits the whole access
+    {
+      code: 'a?.b.startsWith("a")',
+      output: 'a?.b[0] === "a"',
+      errors: [{ messageId: 'default' }]
+    },
+    // Other boolean positions
+    {
+      code: 'while (str?.startsWith("a")) {}',
+      output: 'while (str?.[0] === "a") {}',
+      errors: [{ messageId: 'default' }]
+    },
+    {
+      code: 'str?.startsWith("a") && foo()',
+      output: 'str?.[0] === "a" && foo()',
+      errors: [{ messageId: 'default' }]
+    },
+    // Value position: `undefined` vs `false` is observable, so report only
+    {
+      code: 'const x = str?.startsWith("a")',
+      output: null,
+      errors: [{ messageId: 'default' }]
+    },
+    {
+      code: 'foo(str?.startsWith("a"))',
+      output: null,
+      errors: [{ messageId: 'default' }]
+    },
+    // `??` forwards the `undefined`, so it is not a pure test position
+    {
+      code: 'str?.startsWith("a") ?? true',
+      output: null,
+      errors: [{ messageId: 'default' }]
     }
   ]
 }, {}, false);
