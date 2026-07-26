@@ -42,6 +42,7 @@
   "dependencies": {
     "@typescript-eslint/types": "^8.65.0",
     "@typescript-eslint/utils": "^8.65.0",
+    "eslint-plugin-vibe-proof": "^1.0.0",
     "foxts": "^5.8.0"
   },
   "devDependencies": {

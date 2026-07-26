@@ -59,7 +59,7 @@ export function ensureParserWithTypeInformation(
   parserServices: Partial<ParserServices> | undefined
 ): asserts parserServices is ParserServicesWithTypeInformation {
   if (!parserServices?.program) {
-    throw new Error('see https://typescript-eslint.io/docs/linting/type-linting');
+    throw new Error('It seems that you have not enabled type information for ESLint. See https://typescript-eslint.io/getting-started/typed-linting for more information.');
   }
 }
 

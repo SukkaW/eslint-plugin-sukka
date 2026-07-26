@@ -40,7 +40,7 @@ export class CallLikeExpressionVisitor<TRuleContext extends RuleContext<string, 
 }
 
 function childrenOf(node: TSESTree.Node, visitorKeys: TSESLint.Parser.VisitorKeys): TSESTree.Node[] {
-  const children = [];
+  const children: TSESTree.Node[] = [];
   const keys = visitorKeys[node.type] as readonly string[] | undefined;
 
   if (keys?.length) {
@@ -49,7 +49,7 @@ function childrenOf(node: TSESTree.Node, visitorKeys: TSESLint.Parser.VisitorKey
        * A node's child may be a node or an array of nodes, e.g., `body` in `estree.Program`.
        * If it's an array, we extract all the nodes from it; if not, we just add the node.
        */
-      const child = node[key as keyof typeof node];
+      const child = node[key as keyof typeof node] as TSESTree.Node;
       if (Array.isArray(child)) {
         appendArrayInPlace(children, child);
       } else {
@@ -58,5 +58,5 @@ function childrenOf(node: TSESTree.Node, visitorKeys: TSESLint.Parser.VisitorKey
     }
   }
 
-  return children.filter(Boolean) as TSESTree.Node[];
+  return children.filter(Boolean);
 }

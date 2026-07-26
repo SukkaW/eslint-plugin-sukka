@@ -10,7 +10,6 @@ export default createRule({
     docs: {
       description:
         'Disallow using `const enum` expression as it can not be inlined and tree-shaken by swc/esbuild/babel/webpack/rollup/vite/bun/rspack'
-      // recommended: 'recommended'
     },
     messages: {
       noConstEnum: 'Do not use `const enum` expression'
