@@ -2,6 +2,7 @@ import { createRule } from '@/utils/create-eslint-rule';
 import { getComponentName } from '@/utils/react-hooks';
 import type { FunctionNode } from '@/utils/react-hooks';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
+import type { TSESTree } from '@typescript-eslint/types';
 
 export type MessageId = 'default';
 
