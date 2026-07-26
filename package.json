@@ -54,7 +54,7 @@
     "@typescript-eslint/rule-tester": "^8.65.0",
     "bumpp": "^11.1.0",
     "bunchee": "^6.12.0",
-    "eslint": "^10.7.0",
+    "eslint": "^10.8.0",
     "eslint-config-sukka": "^8.13.6",
     "eslint-formatter-sukka": "^8.13.6",
     "mocha": "^11.7.6",
