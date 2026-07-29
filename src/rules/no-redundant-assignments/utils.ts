@@ -4,11 +4,7 @@ import type TSESLint from '@typescript-eslint/utils/ts-eslint';
 import type { XOR } from 'foxts/ts-xor';
 
 export function getVariableFromIdentifier(identifier: TSESTree.Identifier, scope: TSESLint.Scope.Scope): TSESLint.Scope.Variable | undefined {
-  let variable = scope.variables.find(value => value.name === identifier.name);
-  if (!variable && scope.upper) {
-    variable = scope.upper.variables.find(value => value.name === identifier.name);
-  }
-  return variable;
+  return scope.set.get(identifier.name) ?? scope.upper?.set.get(identifier.name);
 }
 
 export function reachingDefinitions(reachingDefinitionsMap: Map<string, ReachingDefinitions>) {

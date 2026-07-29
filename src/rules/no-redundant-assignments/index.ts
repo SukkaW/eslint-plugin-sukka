@@ -19,7 +19,6 @@
  */
 // https://sonarsource.github.io/rspec/#/rspec/S4165/javascript
 
-import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import { TSESLint } from '@typescript-eslint/utils';
 import { createRule } from '@/utils/create-eslint-rule';
@@ -49,20 +48,25 @@ export default createRule({
     const codePathSegments: TSESLint.CodePathSegment[][] = [];
     const currentCodePathSegments: TSESLint.CodePathSegment[] = [];
 
+    let enumDepth = 0;
+    // lazily built lookup tables so each identifier resolves in O(1) instead of
+    // scanning every reference/variable of every scope up the scope chain
+    let refByIdentifier: Map<TSESTree.Identifier, TSESLint.Scope.Reference> | null = null;
+    let variableByDefName: Map<TSESTree.Node, TSESLint.Scope.Variable> | null = null;
+
     return {
       AssignmentExpression: pushAssignmentContext,
       'VariableDeclarator[init]': pushAssignmentContext,
       'AssignmentExpression:exit': popAssignmentContext,
       'VariableDeclarator[init]:exit': popAssignmentContext,
+      TSEnumDeclaration() {
+        enumDepth++;
+      },
+      'TSEnumDeclaration:exit': () => {
+        enumDepth--;
+      },
       Identifier(node) {
-        if (
-          node.parent.type === AST_NODE_TYPES.TSEnumBody
-          || node.parent.type === AST_NODE_TYPES.TSEnumDeclaration
-          || node.parent.type === AST_NODE_TYPES.TSEnumMember
-        ) {
-          return;
-        }
-        if (isEnumConstant(node)) {
+        if (enumDepth > 0) {
           return;
         }
         checkIdentifierUsage(node);
@@ -182,12 +186,6 @@ export default createRule({
       );
     }
 
-    function isEnumConstant(node: TSESTree.Node) {
-      return context.sourceCode.getAncestors(node).some(
-        n => n.type === AST_NODE_TYPES.TSEnumDeclaration
-      );
-    }
-
     function variableUsedOutsideOfCodePath(variable: TSESLint.Scope.Variable) {
       return variableUsages.get(variable)!.size > 1;
     }
@@ -228,27 +226,40 @@ export default createRule({
       }
       return defs;
     }
-    function resolveReferenceRecursively(
-      node: TSESTree.Identifier,
-      scope: TSESLint.Scope.Scope | null
-    ): { ref: TSESLint.Scope.Reference | null, variable: TSESLint.Scope.Variable | null } {
-      let current = scope;
-      while (current !== null) {
-        const ref = current.references.find(r => r.identifier === node);
-        if (ref) {
-          return { ref, variable: ref.resolved };
-        }
-        const variable = current.variables.find(v => v.defs.find(def => def.name === node));
-        if (variable) {
-          return { ref: null, variable };
-        }
-        current = current.upper;
+    function buildResolutionMaps() {
+      refByIdentifier = new Map<TSESTree.Identifier, TSESLint.Scope.Reference>();
+      variableByDefName = new Map<TSESTree.Node, TSESLint.Scope.Variable>();
+      const { scopeManager } = context.sourceCode;
+      if (!scopeManager) {
+        return;
       }
-      return { ref: null, variable: null };
+      const { scopes } = scopeManager;
+      for (let i = 0, l = scopes.length; i < l; i++) {
+        const scope = scopes[i];
+        const { references, variables } = scope;
+        for (let j = 0, jl = references.length; j < jl; j++) {
+          const ref = references[j];
+          refByIdentifier.set(ref.identifier as TSESTree.Identifier, ref);
+        }
+        for (let j = 0, jl = variables.length; j < jl; j++) {
+          const variable = variables[j];
+          const { defs } = variable;
+          for (let k = 0, kl = defs.length; k < kl; k++) {
+            variableByDefName.set(defs[k].name, variable);
+          }
+        }
+      }
     }
 
-    function resolveReference(node: TSESTree.Identifier) {
-      return resolveReferenceRecursively(node, context.sourceCode.getScope(node));
+    function resolveReference(node: TSESTree.Identifier): { ref: TSESLint.Scope.Reference | null, variable: TSESLint.Scope.Variable | null } {
+      if (!refByIdentifier || !variableByDefName) {
+        buildResolutionMaps();
+      }
+      const ref = refByIdentifier!.get(node);
+      if (ref) {
+        return { ref, variable: ref.resolved };
+      }
+      return { ref: null, variable: variableByDefName!.get(node) ?? null };
     }
   }
 });
