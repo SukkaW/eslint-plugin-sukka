@@ -18,8 +18,8 @@ importers:
         specifier: ^8.65.0
         version: 8.65.0(eslint@10.8.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
       eslint-plugin-vibe-proof:
-        specifier: ^1.1.0
-        version: 1.1.0(eslint@10.8.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
+        specifier: ^1.2.0
+        version: 1.2.0(eslint@10.8.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
       foxts:
         specifier: ^5.8.1
         version: 5.8.1
@@ -1441,8 +1441,8 @@ packages:
       '@typescript-eslint/eslint-plugin':
         optional: true
 
-  eslint-plugin-vibe-proof@1.1.0:
-    resolution: {integrity: sha512-Fbewo0PLM63jH68eewOg3sgAFcCGzeLBG0Ge2a/xyeBigNGXttZn9RDwboLqLGflrjFi37l83nWNKcQHJqaU5g==}
+  eslint-plugin-vibe-proof@1.2.0:
+    resolution: {integrity: sha512-lC/pxwfj1ARdRiFsGzi4OD8IHkHjJWBKbgwfoSsevDDOA8TRiIFp+8+KriGj5X3/sfi7epqYJOCRv8hTb9Ympw==}
     peerDependencies:
       eslint: '>=9.29.0'
       typescript: '*'
@@ -3491,7 +3491,7 @@ snapshots:
     optionalDependencies:
       '@typescript-eslint/eslint-plugin': 8.65.0(@typescript-eslint/parser@8.65.0(eslint@10.8.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3))(eslint@10.8.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
 
-  eslint-plugin-vibe-proof@1.1.0(eslint@10.8.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3):
+  eslint-plugin-vibe-proof@1.2.0(eslint@10.8.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3):
     dependencies:
       '@typescript-eslint/types': 8.65.0
       '@typescript-eslint/utils': 8.65.0(eslint@10.8.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)

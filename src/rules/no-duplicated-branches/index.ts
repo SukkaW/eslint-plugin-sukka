@@ -61,7 +61,7 @@ export default createRule({
         return;
       }
 
-      for (let i = 1; i < branches.length; i++) {
+      for (let i = 1, len = branches.length; i < len; i++) {
         if (hasRequiredSize([branches[i]])) {
           findFirstDuplicateIfBranch(branches, i);
         }
@@ -83,7 +83,7 @@ export default createRule({
         return;
       }
 
-      for (let i = 1; i < cases.length; i++) {
+      for (let i = 1, len = cases.length; i < len; i++) {
         const firstClauseWithoutBreak = takeWithoutBreak(
           expandSingleBlockStatement(cases[i].consequent)
         );

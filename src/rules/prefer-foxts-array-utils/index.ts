@@ -56,7 +56,8 @@ export default createRule({
               }
             };
 
-            for (const arg of args) {
+            for (let i = 0, len = args.length; i < len; i++) {
+              const arg = args[i];
               if (arg.type === AST_NODE_TYPES.SpreadElement) {
                 flushNonSpread();
                 const spreadArgText = context.sourceCode.getText(arg.argument);

@@ -118,14 +118,14 @@ export default createRule({
       const foundUsage = expressionTokens.find((token, index) => {
         if (eq(token, valueTokens[0])) {
           for (
-            let expressionIndex = index, valueIndex = 0;
-            expressionIndex < expressionTokens.length && valueIndex < valueTokens.length;
+            let expressionIndex = index, valueIndex = 0, expressionLen = expressionTokens.length, valueLen = valueTokens.length;
+            expressionIndex < expressionLen && valueIndex < valueLen;
             expressionIndex++, valueIndex++
           ) {
             if (!eq(expressionTokens[expressionIndex], valueTokens[valueIndex])) {
               break;
             }
-            if (valueIndex === valueTokens.length - 1) {
+            if (valueIndex === valueLen - 1) {
               return true;
             }
           }

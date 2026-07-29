@@ -80,8 +80,9 @@ export function isArrayLikeType(type: ts.Type, services: ParserServicesWithTypeI
 }
 
 function isArrayOrUnionOfArrayType(type: ts.Type, services: ParserServicesWithTypeInformation): boolean {
-  for (const part of getUnionTypes(type)) {
-    if (!isArrayType(part, services)) {
+  const parts = getUnionTypes(type);
+  for (let i = 0, len = parts.length; i < len; i++) {
+    if (!isArrayType(parts[i], services)) {
       return false;
     }
   }

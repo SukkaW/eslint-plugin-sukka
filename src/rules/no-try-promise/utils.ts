@@ -44,7 +44,8 @@ function childrenOf(node: TSESTree.Node, visitorKeys: TSESLint.Parser.VisitorKey
   const keys = visitorKeys[node.type] as readonly string[] | undefined;
 
   if (keys?.length) {
-    for (const key of keys) {
+    for (let i = 0, len = keys.length; i < len; i++) {
+      const key = keys[i];
       /**
        * A node's child may be a node or an array of nodes, e.g., `body` in `estree.Program`.
        * If it's an array, we extract all the nodes from it; if not, we just add the node.

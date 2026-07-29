@@ -36,7 +36,8 @@ export default createRule({
       FunctionExpression: collectComponent,
       ArrowFunctionExpression: collectComponent,
       'Program:exit': function () {
-        for (const node of components) {
+        for (let i = 0, len = components.length; i < len; i++) {
+          const node = components[i];
           const [props] = node.params as [TSESTree.Identifier, ...TSESTree.Parameter[]];
           const propName = props.name;
           const propVariable = context.sourceCode
@@ -45,8 +46,8 @@ export default createRule({
             .find((v) => v.name === propName);
           const propReferences = propVariable?.references ?? [];
 
-          for (const ref of propReferences) {
-            const { parent } = ref.identifier;
+          for (let j = 0, refLen = propReferences.length; j < refLen; j++) {
+            const { parent } = propReferences[j].identifier;
             if (parent.type !== AST_NODE_TYPES.MemberExpression) continue;
             context.report({ messageId: 'default', node: parent });
           }

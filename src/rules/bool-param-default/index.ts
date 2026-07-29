@@ -46,7 +46,8 @@ export default createRule({
   create: (context) => ({
     'FunctionDeclaration, FunctionExpression, ArrowFunctionExpression': (node: FunctionLike) => {
       const functionLike = node;
-      for (const param of functionLike.params) {
+      for (let i = 0, len = functionLike.params.length; i < len; i++) {
+        const param = functionLike.params[i];
         if (param.type === AST_NODE_TYPES.Identifier && isOptionalBoolean(param)) {
           context.report({
             messageId: 'provideDefault',

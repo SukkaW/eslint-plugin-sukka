@@ -83,7 +83,8 @@ function hasJsDocReturn(declaration: ts.Declaration & { jsDoc?: ts.JSDoc[] }) {
   if (!declaration.jsDoc) {
     return false;
   }
-  for (const jsDoc of declaration.jsDoc) {
+  for (let i = 0, len = declaration.jsDoc.length; i < len; i++) {
+    const jsDoc = declaration.jsDoc[i];
     if (jsDoc.tags?.some(tag => RETURN_TAGS.has(tag.tagName.escapedText.toString()))) {
       return true;
     }

@@ -104,7 +104,8 @@ export default createRule({
       const readingUsages: TSESLint.Scope.Reference[] = [];
       let hasAssignmentOfEmptyCollection = false;
 
-      for (const ref of variable.references) {
+      for (let i = 0, len = variable.references.length; i < len; i++) {
+        const ref = variable.references[i];
         if (ref.isWriteOnly()) {
           if (isReferenceAssigningEmptyCollection(ref)) {
             hasAssignmentOfEmptyCollection = true;

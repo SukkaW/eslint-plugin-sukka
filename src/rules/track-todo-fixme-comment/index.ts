@@ -50,7 +50,7 @@ export default createRule({
         if (rawText.includes(pattern)) {
           const lines = rawText.split(RE_NEWLINE);
 
-          for (let i = 0; i < lines.length; i++) {
+          for (let i = 0, len = lines.length; i < len; i++) {
             const index = lines[i].indexOf(pattern);
             if (index >= 0 && !isLetterAround(lines[i], index, pattern)) {
               context.report({

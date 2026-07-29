@@ -108,7 +108,8 @@ function isUnusedCollection(variable: TSESLint.Scope.Variable) {
   // eslint-disable-next-line sukka/no-single-return -- fuck
   let assignCollection = false;
 
-  for (const ref of variable.references) {
+  for (let i = 0, len = variable.references.length; i < len; i++) {
+    const ref = variable.references[i];
     if (ref.isWriteOnly()) {
       if (isReferenceAssigningCollection(ref)) {
         // eslint-disable-next-line sukka/no-single-return -- fuck

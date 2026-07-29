@@ -95,7 +95,8 @@ function returnsIdentifierLater(node: TSESTree.IfStatement, identifierName: stri
   const index = parent.body.indexOf(node);
   if (index < 0) return false;
 
-  for (const statement of parent.body.slice(index + 1)) {
+  for (let i = index + 1, len = parent.body.length; i < len; i++) {
+    const statement = parent.body[i];
     if (
       statement.type === AST_NODE_TYPES.ReturnStatement
       && statement.argument?.type === AST_NODE_TYPES.Identifier

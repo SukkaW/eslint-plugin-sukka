@@ -104,7 +104,8 @@ export default createRule({
       }
     },
     ArrayExpression(node) {
-      for (const element of node.elements) {
+      for (let i = 0, len = node.elements.length; i < len; i++) {
+        const element = node.elements[i];
         if (element?.type !== AST_NODE_TYPES.SpreadElement) continue;
 
         const arg = element.argument;
