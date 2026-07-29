@@ -23,7 +23,7 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import { TSESLint } from '@typescript-eslint/utils';
 import { createRule } from '@/utils/create-eslint-rule';
-import { peek, CodePathContext, ReachingDefinitions, isDefaultParameter, isCompoundAssignment, isSelfAssignement, reachingDefinitions, resolveAssignedValues, AssignmentContext } from './utils';
+import { peek, CodePathContext, ReachingDefinitions, isDefaultParameter, isCompoundAssignment, isSelfAssignment, reachingDefinitions, resolveAssignedValues, AssignmentContext } from './utils';
 import type { Values } from './utils';
 
 export default createRule({
@@ -123,13 +123,13 @@ export default createRule({
         );
         if (lhsValues?.type === 'AssignedValues' && lhsValues.size === 1) {
           const lhsVal = lhsValues.entries().next().value![0];
-          checkRedundantAssignement(ref, ref.writeExpr, lhsVal, rhsValues, variable.name);
+          checkRedundantAssignment(ref, ref.writeExpr, lhsVal, rhsValues, variable.name);
         }
         assignedValuesMap.set(variable, rhsValues);
       });
     }
 
-    function checkRedundantAssignement(
+    function checkRedundantAssignment(
       { resolved: variable }: TSESLint.Scope.Reference,
       node: TSESTree.Node | null | undefined,
       lhsVal: string | TSESLint.Scope.Variable,
@@ -154,7 +154,17 @@ export default createRule({
     // to avoid raising on code like:
     // while (cond) {  let x = 42; }
     function isWrittenOnlyOnce(variable: TSESLint.Scope.Variable) {
-      return variable.references.filter(ref => ref.isWrite()).length === 1;
+      let seen = 0;
+      for (let i = 0, len = variable.references.length; i < len; i++) {
+        const ref = variable.references[i];
+        if (ref.isWrite()) {
+          seen++;
+          if (seen > 1) {
+            return false;
+          }
+        }
+      }
+      return seen === 1;
     }
 
     function shouldReport(ref: TSESLint.Scope.Reference) {
@@ -164,7 +174,7 @@ export default createRule({
         && !isDefaultParameter(ref)
         && variable.name[0] !== '_'
         && !isCompoundAssignment(ref.writeExpr)
-        && !isSelfAssignement(ref)
+        && !isSelfAssignment(ref)
         && !variable.defs.some(
           def => def.type === TSESLint.Scope.DefinitionType.Parameter || (def.type === TSESLint.Scope.DefinitionType.Variable && !def.node.init)
         )

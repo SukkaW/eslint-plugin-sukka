@@ -200,7 +200,7 @@ export function peek<T>(arr: T[]) {
   return arr[arr.length - 1];
 }
 
-export function isSelfAssignement(ref: TSESLint.Scope.Reference) {
+export function isSelfAssignment(ref: TSESLint.Scope.Reference) {
   if (ref.writeExpr?.type === AST_NODE_TYPES.Identifier) {
     return /* lhs */ ref.resolved === /* rhs */ getVariableFromIdentifier(ref.writeExpr, ref.from);
   }
