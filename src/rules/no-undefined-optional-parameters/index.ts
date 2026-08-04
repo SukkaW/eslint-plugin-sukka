@@ -55,7 +55,7 @@ export default createRule({
           return;
         }
 
-        const lastArgument = args[args.length - 1];
+        const lastArgument = args.at(-1)!;
         if (isUndefined(lastArgument) && isOptionalParameter(args.length - 1, call, services)) {
           context.report({
             messageId: 'removeUndefined',

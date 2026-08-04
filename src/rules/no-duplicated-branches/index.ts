@@ -98,10 +98,10 @@ export default createRule({
       if (nodes.length > 0) {
         const tokens = [
           ...context.sourceCode.getTokens(nodes[0]),
-          ...context.sourceCode.getTokens(nodes[nodes.length - 1])
+          ...context.sourceCode.getTokens(nodes.at(-1)!)
         ].filter(token => token.value !== '{' && token.value !== '}');
         return (
-          tokens.length > 0 && tokens[tokens.length - 1].loc.end.line > tokens[0].loc.start.line
+          tokens.length > 0 && tokens.at(-1)!.loc.end.line > tokens[0].loc.start.line
         );
       }
       return false;
@@ -223,7 +223,7 @@ function collectIfBranches(node: TSESTree.IfStatement) {
 
 /** Excludes the break statement from the list */
 function takeWithoutBreak(nodes: TSESTree.Statement[]) {
-  return nodes.length > 0 && nodes[nodes.length - 1].type === AST_NODE_TYPES.BreakStatement
+  return nodes.length > 0 && nodes.at(-1)!.type === AST_NODE_TYPES.BreakStatement
     ? nodes.slice(0, -1)
     : nodes;
 }

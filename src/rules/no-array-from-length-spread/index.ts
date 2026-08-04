@@ -86,7 +86,7 @@ export default createRule({
 
       if (isChainedMethodOnArrayConstructor(node)) {
         const ancestors = context.sourceCode.getAncestors(node);
-        const parent = ancestors[ancestors.length - 1];
+        const parent = ancestors.at(-1)!;
         const grandparent = ancestors[ancestors.length - 2];
         if (
           parent.type === AST_NODE_TYPES.SpreadElement

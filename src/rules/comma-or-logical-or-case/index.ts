@@ -71,7 +71,7 @@ export default createRule({
     return {
       'SwitchCase > SequenceExpression': function (node: TSESTree.SequenceExpression) {
         const expressions = node.expressions;
-        reportIssue(node, expressions[expressions.length - 1], expressions.length);
+        reportIssue(node, expressions.at(-1)!, expressions.length);
       },
       'SwitchCase > LogicalExpression': function (node: TSESTree.LogicalExpression) {
         if (!isSwitchTrue(getEnclosingSwitchStatement(node))) {

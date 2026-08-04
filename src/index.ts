@@ -84,6 +84,7 @@ import preferFoxtsObjectSize from './rules/prefer-foxts-object-size';
 import preferFoxtsCastArray from './rules/prefer-foxts-cast-array';
 import preferFoxtsBitwise from './rules/prefer-foxts-bitwise';
 import preferFoxtsWait from './rules/prefer-foxts-wait';
+import preferSliceOverSplitIndex from './rules/prefer-slice-over-split-index';
 
 const plugin: ESLint.Plugin = {
   configs: {
@@ -133,6 +134,8 @@ const plugin: ESLint.Plugin = {
         'sukka/prefer-foxts-cast-array': 'error',
         'sukka/prefer-foxts-bitwise': 'error',
         'sukka/prefer-foxts-wait': 'error',
+
+        'sukka/prefer-slice-over-split-index': 'error',
         'sukka/avoid-string-starts-with-single-char': 'error',
         'sukka/no-object-create-non-null': 'warn',
         'sukka/track-todo-fixme-comment': 'warn'
@@ -153,6 +156,7 @@ const plugin: ESLint.Plugin = {
       rules: Object.assign<Linter.RulesRecord, Linter.RulesRecord, Linter.RulesRecord>(
         {
           'sukka/no-for-in-iterable': 'error',
+          'sukka/no-indexof-equality': 'error',
           'sukka/no-try-promise': 'error',
           'sukka/no-undefined-optional-parameters': 'warn',
           'sukka/no-useless-string-operation': 'warn',
@@ -229,7 +233,9 @@ const plugin: ESLint.Plugin = {
       'prefer-foxts-object-size': preferFoxtsObjectSize,
       'prefer-foxts-cast-array': preferFoxtsCastArray,
       'prefer-foxts-bitwise': preferFoxtsBitwise,
-      'prefer-foxts-wait': preferFoxtsWait
+      'prefer-foxts-wait': preferFoxtsWait,
+
+      'prefer-slice-over-split-index': preferSliceOverSplitIndex,
     }
   ) as unknown as Record<string, Rule.RuleModule>
 };

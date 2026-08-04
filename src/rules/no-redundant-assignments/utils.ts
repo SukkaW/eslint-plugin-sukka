@@ -193,7 +193,7 @@ export class AssignmentContext {
 }
 
 export function peek<T>(arr: T[]) {
-  return arr[arr.length - 1];
+  return arr.at(-1)!;
 }
 
 export function isSelfAssignment(ref: TSESLint.Scope.Reference) {

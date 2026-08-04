@@ -59,7 +59,7 @@ export default createRule({
     const codePathSegments: TSESLint.CodePathSegment[][] = [];
     let currentCodePathSegments: TSESLint.CodePathSegment[] = [];
 
-    const checkOnFunctionExit = (node: TSESTree.Node) => checkInvariantReturnStatements(node, functionContextStack[functionContextStack.length - 1]);
+    const checkOnFunctionExit = (node: TSESTree.Node) => checkInvariantReturnStatements(node, functionContextStack.at(-1));
 
     function checkInvariantReturnStatements(node: TSESTree.Node, functionContext?: FunctionContext) {
       if (!functionContext || hasDifferentReturnTypes(functionContext, currentCodePathSegments)) {
@@ -97,7 +97,7 @@ export default createRule({
       },
       ReturnStatement(node: TSESTree.Node) {
         if (functionContextStack.length) {
-          const currentContext = functionContextStack[functionContextStack.length - 1];
+          const currentContext = functionContextStack.at(-1)!;
           const returnStatement = node as TSESTree.ReturnStatement;
           currentContext.containsReturnWithoutValue ||= !returnStatement.argument;
           currentContext.returnStatements.push(returnStatement);

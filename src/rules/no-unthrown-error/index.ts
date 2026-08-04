@@ -48,7 +48,7 @@ export default createRule({
 
     function getParent(node: TSESTree.Node) {
       const ancestors = context.sourceCode.getAncestors(node);
-      return ancestors.length > 0 ? ancestors[ancestors.length - 1] : undefined;
+      return ancestors.at(-1);
     }
 
     return {

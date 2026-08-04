@@ -156,7 +156,7 @@ export function collectSwitchBranches(node: TSESTree.SwitchStatement) {
 
 /** Excludes the break statement from the list */
 function takeWithoutBreak(nodes: TSESTree.Statement[]) {
-  return nodes.length > 0 && nodes[nodes.length - 1].type === AST_NODE_TYPES.BreakStatement
+  return nodes.length > 0 && nodes.at(-1)!.type === AST_NODE_TYPES.BreakStatement
     ? nodes.slice(0, -1)
     : nodes;
 }
