@@ -14,6 +14,15 @@ runTest({
     'str.charCodeAt(0)',
     // empty string
     'str.startsWith("")',
+    // Astral code points occupy two UTF-16 code units, so indexing would only
+    // return the leading surrogate.
+    'str.startsWith("😀")',
+    String.raw`str.startsWith("\u{1F600}")`,
+    String.raw`str.startsWith("\uD83D\uDE00")`,
+    // A variation selector and a combining mark make these multi-unit strings
+    // even though each is commonly perceived as one character.
+    String.raw`str.startsWith("\u2764\uFE0F")`,
+    String.raw`str.startsWith("e\u0301")`,
     // already using indexing
     'str[0] === "a"'
   ],
@@ -58,6 +67,24 @@ runTest({
     {
       code: String.raw`str.startsWith("\n")`,
       output: String.raw`str[0] === "\n"`,
+      errors: [{ messageId: 'default' }]
+    },
+    // A BMP symbol is one UTF-16 code unit, even when it is rendered as emoji.
+    {
+      code: 'str.startsWith("❤")',
+      output: 'str[0] === "❤"',
+      errors: [{ messageId: 'default' }]
+    },
+    // Lone surrogates are ill-formed Unicode but still valid single UTF-16 code
+    // units in JavaScript strings, so startsWith and indexing agree for them.
+    {
+      code: String.raw`str.startsWith("\uD83D")`,
+      output: String.raw`str[0] === "\uD83D"`,
+      errors: [{ messageId: 'default' }]
+    },
+    {
+      code: String.raw`str.startsWith("\uDE00")`,
+      output: String.raw`str[0] === "\uDE00"`,
       errors: [{ messageId: 'default' }]
     },
     // Optional call on the receiver keeps the optional index access
