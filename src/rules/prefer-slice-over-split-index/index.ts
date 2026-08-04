@@ -1,8 +1,26 @@
 import { createRule } from '@/utils/create-eslint-rule';
+import { ensureNamedImports } from '@/utils/ensure-import';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
-import { ASTUtils } from '@typescript-eslint/utils';
-import type { TSESLint } from '@typescript-eslint/utils';
+import { TSESLint, ASTUtils } from '@typescript-eslint/utils';
+
+const IMPORT_SOURCE = 'foxts/split-nth';
+const MAX_ARRAY_INDEX = 0xFF_FF_FF_FE;
+
+type HelperName = 'splitFirst' | 'splitSecond' | 'splitNth';
+type MessageId = 'preferSplitFirst' | 'preferSplitSecond' | 'preferSplitNth';
+
+interface SplitCall {
+  call: TSESTree.CallExpression,
+  separatorValue: string
+}
+
+interface Candidate extends SplitCall {
+  node: TSESTree.MemberExpression,
+  index: number,
+  helperName: HelperName,
+  messageId: MessageId
+}
 
 function staticValue(
   node: TSESTree.Node,
@@ -13,28 +31,92 @@ function staticValue(
 
 function isSupportedLimit(
   limit: TSESTree.CallExpressionArgument | undefined,
-  index: 0 | 1,
+  index: number,
   sourceCode: Readonly<TSESLint.SourceCode>
 ): boolean {
   if (limit == null) return true;
   const value = staticValue(limit, sourceCode);
-  return typeof value === 'number' && Number.isSafeInteger(value) && value > index;
+  return typeof value === 'number'
+    && Number.isSafeInteger(value)
+    && (value >>> 0) > index;
 }
 
 function getSplitCall(
   node: TSESTree.MemberExpression,
   sourceCode: Readonly<TSESLint.SourceCode>
-): TSESTree.CallExpression | null {
+): SplitCall | null {
   const call = node.object;
   if (call.type !== AST_NODE_TYPES.CallExpression) return null;
   const callee = call.callee;
   if (callee.type !== AST_NODE_TYPES.MemberExpression) return null;
   if (ASTUtils.getPropertyName(callee, sourceCode.getScope(callee)) !== 'split') return null;
   if (call.arguments.length === 0 || call.arguments.length > 2) return null;
+  const separatorValue = staticValue(call.arguments[0], sourceCode);
+  return typeof separatorValue === 'string' ? { call, separatorValue } : null;
+}
+
+function getHelper(index: number, separatorValue: string): {
+  helperName: HelperName,
+  messageId: MessageId
+} {
+  // The specialized helpers intentionally optimize non-empty separators.
+  // `splitNth` is the only one that preserves `split('')` UTF-16 code-unit behavior.
+  if (separatorValue !== '') {
+    if (index === 0) {
+      return { helperName: 'splitFirst', messageId: 'preferSplitFirst' };
+    }
+    if (index === 1) {
+      return { helperName: 'splitSecond', messageId: 'preferSplitSecond' };
+    }
+  }
+  return { helperName: 'splitNth', messageId: 'preferSplitNth' };
+}
+
+function canUseHelper(
+  node: TSESTree.Node,
+  helperName: HelperName,
+  sourceCode: Readonly<TSESLint.SourceCode>
+): boolean {
+  const variable = ASTUtils.findVariable(sourceCode.getScope(node), helperName);
+  if (variable == null || variable.defs.length === 0) return true;
+
+  const def = variable.defs.at(0);
+  return def?.type === TSESLint.Scope.DefinitionType.ImportBinding
+    && def.node.type === AST_NODE_TYPES.ImportSpecifier
+    && def.node.imported.type === AST_NODE_TYPES.Identifier
+    && def.node.imported.name === helperName
+    && 'source' in def.parent
+    && def.parent.source.value === IMPORT_SOURCE;
+}
+
+function getReplacement(
+  candidate: Candidate,
+  sourceCode: Readonly<TSESLint.SourceCode>
+): string | null {
+  const { node, index, call, helperName } = candidate;
+  const callee = call.callee;
+  if (callee.type !== AST_NODE_TYPES.MemberExpression) return null;
+
   const separator = call.arguments[0];
-  const value = staticValue(separator, sourceCode);
-  if (typeof value !== 'string' || value.length === 0) return null;
-  return call;
+  const limit = call.arguments.at(1);
+  if (
+    separator.type === AST_NODE_TYPES.SpreadElement
+    || callee.object.type === AST_NODE_TYPES.Super
+    || call.optional
+    || callee.optional
+    || ASTUtils.hasSideEffect(node.property, sourceCode)
+    || (callee.computed && ASTUtils.hasSideEffect(callee.property, sourceCode))
+    || (limit != null && ASTUtils.hasSideEffect(limit, sourceCode))
+    || sourceCode.getCommentsInside(node).length > 0
+    || !canUseHelper(node, helperName, sourceCode)
+  ) return null;
+
+  const argumentsText = [
+    sourceCode.getText(callee.object),
+    sourceCode.getText(separator)
+  ];
+  if (helperName === 'splitNth') argumentsText.push(String(index));
+  return `${helperName}(${argumentsText.join(', ')})`;
 }
 
 export default createRule({
@@ -42,28 +124,77 @@ export default createRule({
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Prefer `indexOf(needle)` and `slice(...)` over `split()[N]` when splitting a string into two pieces.'
+      recommended: 'recommended',
+      description: 'Prefer the optimized helpers from `foxts/split-nth` over allocating an intermediate array with `value.split(separator)[index]`.'
     },
+    fixable: 'code',
     messages: {
-      preferSliceFirst: 'Prefer `indexOf(needle)` and `slice(0, index)` over `split(needle)[0]` for string separators. `split` will allocate an intermediate array, resulting in poorer performance. Preserve the missing-separator fallback explicitly.',
-      preferSliceSecond: 'Prefer `indexOf(needle)` and `slice(index)` over `split(needle)[1]` for string separators. `split` will allocate an intermediate array, resulting in poorer performance. Preserve the missing-separator fallback explicitly.'
+      preferSplitFirst: 'Use `splitFirst(value, separator)` from `foxts/split-nth` to avoid allocating an intermediate array.',
+      preferSplitSecond: 'Use `splitSecond(value, separator)` from `foxts/split-nth` to avoid allocating an intermediate array.',
+      preferSplitNth: 'Use `splitNth(value, separator, index)` from `foxts/split-nth` to avoid allocating an intermediate array.'
     },
     schema: []
   },
   create(context) {
     const { sourceCode } = context;
+    const candidates: Candidate[] = [];
+
     return {
       MemberExpression(node) {
         if (!node.computed) return;
         const index = staticValue(node.property, sourceCode);
-        if (index !== 0 && index !== 1) return;
+        if (
+          typeof index !== 'number'
+          || !Number.isSafeInteger(index)
+          || index < 0
+          || index > MAX_ARRAY_INDEX
+        ) return;
 
-        const call = getSplitCall(node, sourceCode);
-        if (call == null || !isSupportedLimit(call.arguments[1], index, sourceCode)) return;
+        const match = getSplitCall(node, sourceCode);
+        if (
+          match == null
+          || !isSupportedLimit(match.call.arguments[1], index, sourceCode)
+        ) return;
 
-        context.report({
+        candidates.push({
           node,
-          messageId: index === 0 ? 'preferSliceFirst' : 'preferSliceSecond'
+          index,
+          ...match,
+          ...getHelper(index, match.separatorValue)
+        });
+      },
+
+      'Program:exit': () => {
+        const replacements = candidates.map((candidate) => getReplacement(candidate, sourceCode));
+        const importedHelpers = candidates.flatMap((candidate, index) => (
+          replacements[index] == null ? [] : [candidate.helperName]
+        ));
+        let importFixClaimed = false;
+
+        candidates.forEach((candidate, index) => {
+          const replacement = replacements[index];
+          let fix: TSESLint.ReportFixFunction | null = null;
+          if (replacement != null) {
+            const ensureImport = !importFixClaimed;
+            importFixClaimed = true;
+            fix = function *fix(fixer) {
+              if (ensureImport) {
+                yield *ensureNamedImports(
+                  fixer,
+                  sourceCode,
+                  IMPORT_SOURCE,
+                  importedHelpers
+                );
+              }
+              yield fixer.replaceText(candidate.node, replacement);
+            };
+          }
+
+          context.report({
+            node: candidate.node,
+            messageId: candidate.messageId,
+            fix
+          });
         });
       }
     };

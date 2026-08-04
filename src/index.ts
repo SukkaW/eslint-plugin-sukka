@@ -19,8 +19,13 @@ function renameVibeProofRule(name: string) {
 
 /** Vendor vibe-proof's rules in, applying {@link vibe_proof_renamed_rules}. */
 function loadVibeProof(rules: typeof eslint_plugin_vibe_proof.rules) {
-  return Object.fromEntries(
-    Object.entries(rules).map(([name, rule]) => [renameVibeProofRule(name), rule])
+  return Object.entries(rules).reduce<Record<string, Rule.RuleModule>>(
+    (loaded, [name, rule]) => {
+      // @ts-expect-error -- merge rules
+      loaded[renameVibeProofRule(name)] = rule;
+      return loaded;
+    },
+    {}
   );
 }
 
@@ -31,11 +36,12 @@ function loadVibeProof(rules: typeof eslint_plugin_vibe_proof.rules) {
  * listing rules by hand.
  */
 function loadVibeProofConfig(rules: Linter.RulesRecord): Linter.RulesRecord {
-  return Object.fromEntries(
-    Object.entries(rules).map(([key, value]) => [
-      `sukka/${renameVibeProofRule(key.slice('vibe-proof/'.length))}`,
-      value
-    ])
+  return Object.entries(rules).reduce<Linter.RulesRecord>(
+    (loaded, [key, value]) => {
+      loaded[`sukka/${renameVibeProofRule(key.slice('vibe-proof/'.length))}`] = value;
+      return loaded;
+    },
+    {}
   );
 }
 
@@ -185,7 +191,6 @@ const plugin: ESLint.Plugin = {
       )
     }
   },
-  // eslint-disable-next-line sukka/type/no-force-cast-via-top-type -- ESLint type is too lose to be assginable
   rules: Object.assign(
     // vendored from eslint-plugin-vibe-proof, see `loadVibeProof`
     loadVibeProof(eslint_plugin_vibe_proof.rules),
@@ -237,7 +242,7 @@ const plugin: ESLint.Plugin = {
 
       'prefer-slice-over-split-index': preferSliceOverSplitIndex,
     }
-  ) as unknown as Record<string, Rule.RuleModule>
+  )
 };
 
 export default plugin;
