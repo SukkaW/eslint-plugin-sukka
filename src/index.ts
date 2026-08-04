@@ -240,7 +240,7 @@ const plugin: ESLint.Plugin = {
       'prefer-foxts-bitwise': preferFoxtsBitwise,
       'prefer-foxts-wait': preferFoxtsWait,
 
-      'prefer-slice-over-split-index': preferSliceOverSplitIndex,
+      'prefer-slice-over-split-index': preferSliceOverSplitIndex
     }
   )
 };
