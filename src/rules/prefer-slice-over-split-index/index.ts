@@ -7,8 +7,8 @@ import { TSESLint, ASTUtils } from '@typescript-eslint/utils';
 const IMPORT_SOURCE = 'foxts/split-nth';
 const MAX_ARRAY_INDEX = 0xFF_FF_FF_FE;
 
-type HelperName = 'splitFirst' | 'splitSecond' | 'splitNth';
-type MessageId = 'preferSplitFirst' | 'preferSplitSecond' | 'preferSplitNth';
+type HelperName = 'split0th' | 'split1st' | 'prefer_splitNth';
+type MessageId = 'prefer_split0th' | 'prefer_split1st' | 'preferprefer_splitNth';
 
 interface SplitCall {
   call: TSESTree.CallExpression,
@@ -60,16 +60,16 @@ function getHelper(index: number, separatorValue: string): {
   messageId: MessageId
 } {
   // The specialized helpers intentionally optimize non-empty separators.
-  // `splitNth` is the only one that preserves `split('')` UTF-16 code-unit behavior.
+  // `prefer_splitNth` is the only one that preserves `split('')` UTF-16 code-unit behavior.
   if (separatorValue !== '') {
     if (index === 0) {
-      return { helperName: 'splitFirst', messageId: 'preferSplitFirst' };
+      return { helperName: 'split0th', messageId: 'prefer_split0th' };
     }
     if (index === 1) {
-      return { helperName: 'splitSecond', messageId: 'preferSplitSecond' };
+      return { helperName: 'split1st', messageId: 'prefer_split1st' };
     }
   }
-  return { helperName: 'splitNth', messageId: 'preferSplitNth' };
+  return { helperName: 'prefer_splitNth', messageId: 'preferprefer_splitNth' };
 }
 
 function canUseHelper(
@@ -115,7 +115,7 @@ function getReplacement(
     sourceCode.getText(callee.object),
     sourceCode.getText(separator)
   ];
-  if (helperName === 'splitNth') argumentsText.push(String(index));
+  if (helperName === 'prefer_splitNth') argumentsText.push(String(index));
   return `${helperName}(${argumentsText.join(', ')})`;
 }
 
@@ -129,9 +129,9 @@ export default createRule({
     },
     fixable: 'code',
     messages: {
-      preferSplitFirst: 'Use `splitFirst(value, separator)` from `foxts/split-nth` to avoid allocating an intermediate array.',
-      preferSplitSecond: 'Use `splitSecond(value, separator)` from `foxts/split-nth` to avoid allocating an intermediate array.',
-      preferSplitNth: 'Use `splitNth(value, separator, index)` from `foxts/split-nth` to avoid allocating an intermediate array.'
+      prefer_split0th: 'Use `split0th(value, separator)` from `foxts/split-nth` to avoid allocating an intermediate array.',
+      prefer_split1st: 'Use `split1st(value, separator)` from `foxts/split-nth` to avoid allocating an intermediate array.',
+      preferprefer_splitNth: 'Use `prefer_splitNth(value, separator, index)` from `foxts/split-nth` to avoid allocating an intermediate array.'
     },
     schema: []
   },
