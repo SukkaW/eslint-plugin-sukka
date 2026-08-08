@@ -87,7 +87,7 @@ const plugin: ESLint.Plugin = {
 
         'sukka/object-format': 'off', // do not enable by default
 
-        'sukka/prefer-single-boolean-return': 'error',
+        'sukka/prefer-single-boolean-return': 'off', // deprecated
         'sukka/prefer-foxts-noop': 'error',
         'sukka/prefer-nullthrow': 'error',
         'sukka/prefer-foxts-error-util': 'error',
