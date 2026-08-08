@@ -1,49 +1,4 @@
-import type { ESLint, Linter, Rule } from 'eslint';
-
-// eslint-plugin-vibe-proof, the single source of truth for the rules that used
-// to live here. They are vendored in under the `sukka/` prefix so existing
-// configs keep working without registering a second plugin.
-import { eslint_plugin_vibe_proof } from 'eslint-plugin-vibe-proof';
-
-/**
- * Rules this plugin vendors in under a name that differs from vibe-proof's,
- * kept for backwards compatibility. Keyed by the vibe-proof name.
- */
-const vibe_proof_renamed_rules: Record<string, string> = {
-  'prefer-hoisted-regex': 'no-regex-in-function'
-};
-
-function renameVibeProofRule(name: string) {
-  return vibe_proof_renamed_rules[name] ?? name;
-}
-
-/** Vendor vibe-proof's rules in, applying {@link vibe_proof_renamed_rules}. */
-function loadVibeProof(rules: typeof eslint_plugin_vibe_proof.rules) {
-  return Object.entries(rules).reduce<Record<string, Rule.RuleModule>>(
-    (loaded, [name, rule]) => {
-      // @ts-expect-error -- merge rules
-      loaded[renameVibeProofRule(name)] = rule;
-      return loaded;
-    },
-    {}
-  );
-}
-
-/**
- * Re-prefix a vibe-proof preset's rules from `vibe-proof/` to `sukka/`, so its
- * presets can be merged into this plugin's own. New rules added to the upstream
- * preset are picked up automatically, hence reading the preset instead of
- * listing rules by hand.
- */
-function loadVibeProofConfig(rules: Linter.RulesRecord): Linter.RulesRecord {
-  return Object.entries(rules).reduce<Linter.RulesRecord>(
-    (loaded, [key, value]) => {
-      loaded[`sukka/${renameVibeProofRule(key.slice('vibe-proof/'.length))}`] = value;
-      return loaded;
-    },
-    {}
-  );
-}
+import type { ESLint, Rule } from 'eslint';
 
 // eslint-plugin-sukka
 import no_return_await from './rules/no-return-await';
@@ -91,6 +46,7 @@ import preferFoxtsCastArray from './rules/prefer-foxts-cast-array';
 import preferFoxtsBitwise from './rules/prefer-foxts-bitwise';
 import preferFoxtsWait from './rules/prefer-foxts-wait';
 import preferSliceOverSplitIndex from './rules/prefer-slice-over-split-index';
+import migrateVibeProofEslintDisable from './rules/migrate-vibe-proof-eslint-disable';
 
 const plugin: ESLint.Plugin = {
   configs: {
@@ -101,7 +57,7 @@ const plugin: ESLint.Plugin = {
           return plugin;
         }
       },
-      rules: Object.assign<Linter.RulesRecord, Linter.RulesRecord, Linter.RulesRecord>({
+      rules: {
         'sukka/bool-param-default': 'error',
         'sukka/call-argument-line': 'error',
         'sukka/class-prototype': 'warn',
@@ -145,12 +101,7 @@ const plugin: ESLint.Plugin = {
         'sukka/avoid-string-starts-with-single-char': 'error',
         'sukka/no-object-create-non-null': 'warn',
         'sukka/track-todo-fixme-comment': 'warn'
-      },
-      loadVibeProofConfig(eslint_plugin_vibe_proof.configs.common.rules),
-      {
-        // vibe-proof relies on this rule's default option, be explicit here
-        'sukka/ban-eslint-disable': ['error', 'allow-with-description']
-      })
+      }
     },
     recommended_extra_with_typed_lint: {
       name: 'eslint-plugin-sukka/recommended_extra_with_typed_lint',
@@ -159,18 +110,13 @@ const plugin: ESLint.Plugin = {
           return plugin;
         }
       },
-      rules: Object.assign<Linter.RulesRecord, Linter.RulesRecord, Linter.RulesRecord>(
-        {
-          'sukka/no-for-in-iterable': 'error',
-          'sukka/no-indexof-equality': 'error',
-          'sukka/no-try-promise': 'error',
-          'sukka/no-undefined-optional-parameters': 'warn',
-          'sukka/no-useless-string-operation': 'warn',
-          'sukka/only-await-thenable': 'off' // replaced by typescript-eslint await-thenable rule
-        },
-        loadVibeProofConfig(eslint_plugin_vibe_proof.configs.common_type_checked.rules),
-        loadVibeProofConfig(eslint_plugin_vibe_proof.configs.react_type_checked.rules)
-      )
+      rules: {
+        'sukka/no-for-in-iterable': 'error',
+        'sukka/no-try-promise': 'error',
+        'sukka/no-undefined-optional-parameters': 'warn',
+        'sukka/no-useless-string-operation': 'warn',
+        'sukka/only-await-thenable': 'off' // replaced by typescript-eslint await-thenable rule
+      }
     },
     recommended_react: {
       name: 'eslint-plugin-sukka/recommended_react',
@@ -179,70 +125,66 @@ const plugin: ESLint.Plugin = {
           return plugin;
         }
       },
-      rules: Object.assign<Linter.RulesRecord, Linter.RulesRecord>(
-        {
-          'sukka/react-filename-extension': ['error', { allow: 'as-needed' }],
-          'sukka/jsx-shorthand-boolean': 'error',
-          'sukka/jsx-shorthand-fragment': 'error',
-          'sukka/react-prefer-destructuring-assignment': 'warn',
-          'sukka/react-no-use-state-object': 'warn'
-        },
-        loadVibeProofConfig(eslint_plugin_vibe_proof.configs.react.rules)
-      )
+      rules: {
+        'sukka/react-filename-extension': ['error', { allow: 'as-needed' }],
+        'sukka/jsx-shorthand-boolean': 'error',
+        'sukka/jsx-shorthand-fragment': 'error',
+        'sukka/react-prefer-destructuring-assignment': 'warn',
+        'sukka/react-no-use-state-object': 'warn'
+      }
     }
   },
-  rules: Object.assign(
-    // vendored from eslint-plugin-vibe-proof, see `loadVibeProof`
-    loadVibeProof(eslint_plugin_vibe_proof.rules),
-    {
-      'no-return-await': no_return_await,
-      'no-expression-empty-lines': no_expression_empty_lines,
-      'object-format': object_format,
-      'prefer-single-boolean-return': prefer_single_boolean_return,
-      'prefer-foxts-noop': preferFoxtsNoop,
-      'prefer-nullthrow': preferNullthrow,
-      'no-all-duplicated-branches': noDuplicatedBranches,
-      'no-duplicated-branches': noDuplicatedBranches,
-      'bool-param-default': boolParamDefault,
-      'call-argument-line': callArgumentLine,
-      'class-prototype': classPrototype,
-      'comma-or-logical-or-case': commaOrLogicalOrCase,
-      'track-todo-fixme-comment': trackTodoFixmeComment,
-      'no-element-overwrite': noElementOverwrite,
-      'no-empty-collection': noEmptyCollection,
-      'no-equals-in-for-termination': noEqualsInForTermination,
-      'no-top-level-this': noTopLevelThis,
-      'no-invariant-returns': noInvariantReturns,
-      'no-redundant-assignments': noRedundantAssignments,
-      'no-same-line-conditional': noSameLineConditional,
-      'no-small-switch': noSmallSwitch,
-      'no-unused-collection': noUnusedCollection,
-      'no-useless-plusplus': noUselessPlusplus,
-      'no-export-const-enum': no_export_const_enum,
-      'no-for-in-iterable': noForInIterable,
-      'only-await-thenable': onlyAwaitThenable,
-      'no-undefined-optional-parameters': noUndefinedOptionalParameters,
-      'no-try-promise': noTryPromise,
-      'no-unthrown-error': noUnthrownError,
-      'no-useless-string-operation': noUselessStringOperation,
-      'react-filename-extension': reactFilenameExtension,
-      'jsx-shorthand-boolean': jsxShorthandBoolean,
-      'jsx-shorthand-fragment': jsxShorthandFragment,
-      'react-prefer-destructuring-assignment': reactPreferDestructuringAssignment,
-      'no-array-from-length-spread': noArrayFromLengthSpread,
-      'prefer-foxts-error-util': preferFoxtsErrorUtil,
-      'prefer-foxts-array-utils': preferFoxtsArrayUtils,
-      'avoid-string-starts-with-single-char': avoidStringStartsWithSingleChar,
-      'react-no-use-state-object': reactNoUseStateObject,
-      'no-object-create-non-null': noObjectCreateNonNull,
-      'prefer-foxts-object-size': preferFoxtsObjectSize,
-      'prefer-foxts-cast-array': preferFoxtsCastArray,
-      'prefer-foxts-bitwise': preferFoxtsBitwise,
-      'prefer-foxts-wait': preferFoxtsWait,
+  // eslint-disable-next-line sukka/type/no-force-cast-via-top-type -- make typescript happy
+  rules: {
+    'no-return-await': no_return_await,
+    'no-expression-empty-lines': no_expression_empty_lines,
+    'object-format': object_format,
+    'prefer-single-boolean-return': prefer_single_boolean_return,
+    'prefer-foxts-noop': preferFoxtsNoop,
+    'prefer-nullthrow': preferNullthrow,
+    'no-all-duplicated-branches': noDuplicatedBranches,
+    'no-duplicated-branches': noDuplicatedBranches,
+    'bool-param-default': boolParamDefault,
+    'call-argument-line': callArgumentLine,
+    'class-prototype': classPrototype,
+    'comma-or-logical-or-case': commaOrLogicalOrCase,
+    'track-todo-fixme-comment': trackTodoFixmeComment,
+    'no-element-overwrite': noElementOverwrite,
+    'no-empty-collection': noEmptyCollection,
+    'no-equals-in-for-termination': noEqualsInForTermination,
+    'no-top-level-this': noTopLevelThis,
+    'no-invariant-returns': noInvariantReturns,
+    'no-redundant-assignments': noRedundantAssignments,
+    'no-same-line-conditional': noSameLineConditional,
+    'no-small-switch': noSmallSwitch,
+    'no-unused-collection': noUnusedCollection,
+    'no-useless-plusplus': noUselessPlusplus,
+    'no-export-const-enum': no_export_const_enum,
+    'no-for-in-iterable': noForInIterable,
+    'only-await-thenable': onlyAwaitThenable,
+    'no-undefined-optional-parameters': noUndefinedOptionalParameters,
+    'no-try-promise': noTryPromise,
+    'no-unthrown-error': noUnthrownError,
+    'no-useless-string-operation': noUselessStringOperation,
+    'react-filename-extension': reactFilenameExtension,
+    'jsx-shorthand-boolean': jsxShorthandBoolean,
+    'jsx-shorthand-fragment': jsxShorthandFragment,
+    'react-prefer-destructuring-assignment': reactPreferDestructuringAssignment,
+    'no-array-from-length-spread': noArrayFromLengthSpread,
+    'prefer-foxts-error-util': preferFoxtsErrorUtil,
+    'prefer-foxts-array-utils': preferFoxtsArrayUtils,
+    'avoid-string-starts-with-single-char': avoidStringStartsWithSingleChar,
+    'react-no-use-state-object': reactNoUseStateObject,
+    'no-object-create-non-null': noObjectCreateNonNull,
+    'prefer-foxts-object-size': preferFoxtsObjectSize,
+    'prefer-foxts-cast-array': preferFoxtsCastArray,
+    'prefer-foxts-bitwise': preferFoxtsBitwise,
+    'prefer-foxts-wait': preferFoxtsWait,
 
-      'prefer-slice-over-split-index': preferSliceOverSplitIndex
-    }
-  )
+    'prefer-slice-over-split-index': preferSliceOverSplitIndex,
+
+    'migrate-vibe-proof-eslint-disable': migrateVibeProofEslintDisable
+  } as unknown as Record<string, Rule.RuleModule>
 };
 
 export default plugin;

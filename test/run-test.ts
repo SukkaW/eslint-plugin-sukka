@@ -49,9 +49,15 @@ interface RunOptions<TOptions extends readonly unknown[], TMessageIds extends st
 function runTest<TOptions extends readonly unknown[], TMessageIds extends string>(
   { module: mod, valid, invalid }: RunOptions<TOptions, TMessageIds>,
   extraRules?: Record<string, TSESLint.AnyRuleModule>,
-  withTypedLinting = true
+  withTypedLinting = true,
+  /**
+   * Plugins to register, for fixtures that reference namespaced rules. Rules
+   * named in a directive comment have to resolve, and `defineRule` cannot
+   * register a `plugin/rule` name under flat config.
+   */
+  extraPlugins?: Record<string, { rules: Record<string, TSESLint.AnyRuleModule> }>
 ) {
-  const tester = extraRules
+  const tester = (extraRules ?? extraPlugins)
     ? (() => {
       const tester = new RuleTester({
         languageOptions: {
@@ -72,10 +78,13 @@ function runTest<TOptions extends readonly unknown[], TMessageIds extends string
         },
         linterOptions: {
           reportUnusedDisableDirectives: false
-        }
+        },
+        ...(extraPlugins && { plugins: extraPlugins })
       });
 
-      Object.entries(extraRules).forEach(([name, rule]) => tester.defineRule(name, rule));
+      if (extraRules) {
+        Object.entries(extraRules).forEach(([name, rule]) => tester.defineRule(name, rule));
+      }
 
       return tester;
     })()
