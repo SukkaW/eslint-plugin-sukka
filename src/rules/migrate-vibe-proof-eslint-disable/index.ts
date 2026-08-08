@@ -67,7 +67,11 @@ export default createRule({
 
     return {
       'Program:exit': () => {
-        for (const comment of sourceCode.getAllComments()) {
+        const comments = sourceCode.getAllComments();
+
+        for (let i = 0, len = comments.length; i < len; i++) {
+          const comment = comments[i];
+
           const matched = rDirective.exec(comment.value);
           if (!matched) continue;
 
