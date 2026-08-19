@@ -47,6 +47,7 @@ import preferFoxtsBitwise from './rules/prefer-foxts-bitwise';
 import preferFoxtsWait from './rules/prefer-foxts-wait';
 import preferSliceOverSplitIndex from './rules/prefer-slice-over-split-index';
 import migrateVibeProofEslintDisable from './rules/migrate-vibe-proof-eslint-disable';
+import preferInlineExport from './rules/prefer-inline-export';
 
 const plugin: ESLint.Plugin = {
   configs: {
@@ -98,6 +99,7 @@ const plugin: ESLint.Plugin = {
         'sukka/prefer-foxts-wait': 'error',
 
         'sukka/prefer-slice-over-split-index': 'error',
+        'sukka/prefer-inline-export': 'error',
         'sukka/avoid-string-starts-with-single-char': 'error',
         'sukka/no-object-create-non-null': 'warn',
         'sukka/track-todo-fixme-comment': 'warn'
@@ -182,6 +184,8 @@ const plugin: ESLint.Plugin = {
     'prefer-foxts-wait': preferFoxtsWait,
 
     'prefer-slice-over-split-index': preferSliceOverSplitIndex,
+
+    'prefer-inline-export': preferInlineExport,
 
     'migrate-vibe-proof-eslint-disable': migrateVibeProofEslintDisable
   } as unknown as Record<string, Rule.RuleModule>
