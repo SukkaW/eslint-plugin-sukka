@@ -310,6 +310,37 @@ runTest({
       output: 'export const value: number = 1;',
       errors: [{ messageId: 'inlineNamed' }]
     },
+    // a named export inlines regardless of what the `const` holds — unlike
+    // `export default`, there is always an `export const` form
+    {
+      code: dedent`
+        const foo = 1;
+        export { foo };
+      `,
+      output: 'export const foo = 1;',
+      errors: [{ messageId: 'inlineNamed' }]
+    },
+    {
+      code: 'const foo = 1; export { foo };',
+      output: 'export const foo = 1;',
+      errors: [{ messageId: 'inlineNamed' }]
+    },
+    {
+      code: dedent`
+        const obj = { a: 1 };
+        export { obj };
+      `,
+      output: 'export const obj = { a: 1 };',
+      errors: [{ messageId: 'inlineNamed' }]
+    },
+    {
+      code: dedent`
+        const s = "x";
+        export { s };
+      `,
+      output: 'export const s = "x";',
+      errors: [{ messageId: 'inlineNamed' }]
+    },
     // inlining a named export keeps the binding, so `typeof` still resolves
     {
       code: dedent`
