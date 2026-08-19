@@ -73,13 +73,6 @@ runTest({
       export { Comp as "a-b" };
     `,
 
-    // multiple specifiers
-    dedent`
-      function a() {}
-      function b() {}
-      export { a, b };
-    `,
-
     // inlining would leave a second export of the same binding behind
     dedent`
       function Comp() {}
@@ -89,6 +82,13 @@ runTest({
 
     // re-export from another module
     'export { Comp } from "./comp";',
+
+    // nothing in the list is inlinable: imported and `let` bindings
+    dedent`
+      import { x } from "m";
+      let y = 1;
+      export { x, y };
+    `,
 
     // type-only export keeps the type/value distinction
     dedent`
@@ -368,6 +368,91 @@ runTest({
         export { Comp };
       `,
       output: 'export @dec class Comp {}',
+      errors: [{ messageId: 'inlineNamed' }]
+    },
+
+    // multiple specifiers: every eligible binding is inlined and the now-empty
+    // export statement is removed
+    {
+      code: 'const foo = 1; function bar(){} export { foo, bar };',
+      output: 'export const foo = 1; export function bar(){}',
+      errors: [
+        { messageId: 'inlineNamed' },
+        { messageId: 'inlineNamed' }
+      ]
+    },
+    {
+      code: dedent`
+        function a() {}
+        function b() {}
+        export { a, b };
+      `,
+      output: dedent`
+        export function a() {}
+        export function b() {}
+      `,
+      errors: [
+        { messageId: 'inlineNamed' },
+        { messageId: 'inlineNamed' }
+      ]
+    },
+    {
+      code: dedent`
+        function a() {}
+        function b() {}
+        function c() {}
+        export { a, b, c };
+      `,
+      output: dedent`
+        export function a() {}
+        export function b() {}
+        export function c() {}
+      `,
+      errors: [
+        { messageId: 'inlineNamed' },
+        { messageId: 'inlineNamed' },
+        { messageId: 'inlineNamed' }
+      ]
+    },
+    // partial eligibility: the ineligible specifier stays in a trimmed list
+    {
+      code: dedent`
+        import { x } from "m";
+        function b() {}
+        export { x, b };
+      `,
+      output: dedent`
+        import { x } from "m";
+        export function b() {}
+        export { x };
+      `,
+      errors: [{ messageId: 'inlineNamed' }]
+    },
+    {
+      code: dedent`
+        let y = 1;
+        function b() {}
+        export { y, b };
+      `,
+      output: dedent`
+        let y = 1;
+        export function b() {}
+        export { y };
+      `,
+      errors: [{ messageId: 'inlineNamed' }]
+    },
+    // the inlinable one is first in the list, so the trailing comma goes
+    {
+      code: dedent`
+        function a() {}
+        let y = 1;
+        export { a, y };
+      `,
+      output: dedent`
+        export function a() {}
+        let y = 1;
+        export { y };
+      `,
       errors: [{ messageId: 'inlineNamed' }]
     },
 

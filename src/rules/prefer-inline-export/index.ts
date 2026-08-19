@@ -45,6 +45,12 @@ const optionSchema: JSONSchema4 = {
   }
 };
 
+/** One `export { ... }` specifier paired with the declaration it names. */
+interface Candidate {
+  specifier: TSESTree.ExportSpecifier,
+  declaration: Declaration
+}
+
 /** A declaration statement that could be merged into its export. */
 interface Declaration {
   /** The statement to prefix with `export ` / splice away. */
@@ -179,6 +185,27 @@ function isOverloadImplementation(
 }
 
 /**
+ * Removes one specifier from an `export { a, b }` list along with the comma
+ * that joins it to its neighbour, so the remaining list stays well-formed.
+ */
+function removeSpecifier(
+  fixer: TSESLint.RuleFixer,
+  exportStatement: TSESTree.ExportNamedDeclaration,
+  specifier: TSESTree.Node
+): TSESLint.RuleFix {
+  const specifiers: readonly TSESTree.Node[] = exportStatement.specifiers;
+  const index = specifiers.indexOf(specifier);
+
+  // Not the last entry: take the following comma with it.
+  if (index < specifiers.length - 1) {
+    return fixer.removeRange([specifier.range[0], specifiers[index + 1].range[0]]);
+  }
+
+  // Last entry: take the preceding comma instead.
+  return fixer.removeRange([specifiers[index - 1].range[1], specifier.range[1]]);
+}
+
+/**
  * Comments between the declaration and its export would be stranded in the
  * middle of the merged statement, so we report without fixing.
  */
@@ -295,41 +322,123 @@ export default createRule({
                 ]
               });
             }
-            continue;
           }
+        }
 
-          // Case 3: `export { Comp }`
+        // Case 3: `export { Comp }` / `export { a, b }`.
+        //
+        // Handled per export statement rather than per declaration, because a
+        // single statement may export several bindings and only some of them
+        // can be inlined. Every eligible specifier is removed from the list; if
+        // that empties the list, the whole statement goes away.
+        for (let i = 0, len = body.length; i < len; i++) {
+          const exportStatement = body[i];
           if (
-            next.type === AST_NODE_TYPES.ExportNamedDeclaration
-            && next.declaration == null
-            && next.source == null
-            && next.exportKind === 'value'
-            && next.specifiers.length === 1
-          ) {
-            const [specifier] = next.specifiers;
+            exportStatement.type !== AST_NODE_TYPES.ExportNamedDeclaration
+            || exportStatement.declaration != null
+            || exportStatement.source != null
+            || exportStatement.exportKind !== 'value'
+            || exportStatement.specifiers.length === 0
+          ) continue;
+
+          const inlinable: Candidate[] = [];
+          /** Eligible, but a stranded comment blocks the fix. */
+          const unfixable: Candidate[] = [];
+
+          const { specifiers } = exportStatement;
+          for (let j = 0, specifierLen = specifiers.length; j < specifierLen; j++) {
+            const specifier = specifiers[j];
             if (specifier.exportKind === 'type') continue;
-            if (specifier.local.name !== declaration.name) continue;
             // `export { Comp as default }` / `as Other` renames cannot be
             // expressed as an inline declaration, and `export { Comp as "a-b" }`
             // uses a string name that is not a valid binding at all.
             if (specifier.exported.type !== AST_NODE_TYPES.Identifier) continue;
-            if (specifier.exported.name !== declaration.name) continue;
-            // The binding stays after inlining, so other *reads* are fine —
-            // but a second `export { Comp }` would become a duplicate export.
+            if (specifier.exported.name !== specifier.local.name) continue;
+
+            const variable = ASTUtils.findVariable(
+              sourceCode.getScope(specifier.local),
+              specifier.local.name
+            );
+            // A single `def` means exactly one declaration site; imports and
+            // overload sets are excluded below.
+            const def = variable?.defs.length === 1 ? variable.defs[0] : undefined;
+            if (def == null) continue;
+
+            // A `const` binding is defined by its `VariableDeclarator`, so step
+            // up to the `VariableDeclaration` statement that carries `export`.
+            const definingNode = def.node.type === AST_NODE_TYPES.VariableDeclarator
+              ? def.node.parent
+              : def.node;
+
+            const declaration = getDeclaration(definingNode as TSESTree.ProgramStatement);
+            if (declaration == null) continue;
+            // Only top-level declarations can carry `export`.
+            if (!body.includes(declaration.statement)) continue;
+            if (declaration.name !== specifier.local.name) continue;
+            if (isReassigned(variable)) continue;
+            if (isOverloadImplementation(variable, declaration)) continue;
+            // A second `export { Comp }` elsewhere would become a duplicate.
             if (isExportedMoreThanOnce(variable, specifier)) continue;
+            // The declaration has to precede the export, otherwise adding
+            // `export` to it would move the binding after its own export.
+            if (declaration.statement.range[0] > exportStatement.range[0]) continue;
+            // Comments between the declaration and the export would be
+            // stranded by the splice, so those are reported without a fix.
+            if (hasCommentsBetween(sourceCode, declaration.statement, exportStatement)) {
+              unfixable.push({ specifier, declaration });
+              continue;
+            }
 
-            const fixable = !hasCommentsBetween(sourceCode, statement, next);
+            inlinable.push({ specifier, declaration });
+          }
 
+          for (let j = 0, unfixableLen = unfixable.length; j < unfixableLen; j++) {
+            const { specifier, declaration } = unfixable[j];
             context.report({
-              node: next,
+              node: specifier,
+              messageId: 'inlineNamed',
+              data: { name: declaration.name }
+            });
+          }
+
+          if (inlinable.length === 0) continue;
+
+          const removesWholeStatement = inlinable.length === specifiers.length;
+
+          for (let j = 0, inlinableLen = inlinable.length; j < inlinableLen; j++) {
+            const { specifier, declaration } = inlinable[j];
+            context.report({
+              node: specifier,
               messageId: 'inlineNamed',
               data: { name: declaration.name },
-              fix: fixable
-                ? (fixer) => [
-                  fixer.insertTextBefore(statement, 'export '),
-                  fixer.removeRange([statement.range[1], next.range[1]])
-                ]
-                : null
+              fix(fixer) {
+                if (!removesWholeStatement) {
+                  return [
+                    fixer.insertTextBefore(declaration.statement, 'export '),
+                    removeSpecifier(fixer, exportStatement, specifier)
+                  ];
+                }
+
+                // Removing the whole statement is a single edit shared by every
+                // specifier in it. ESLint applies one report's fixes per pass
+                // and drops any that overlap, so the first specifier carries
+                // the complete fix -- every `export ` insert plus the removal
+                // -- and the remaining specifiers report without one.
+                if (specifier !== inlinable[0].specifier) return null;
+
+                // Splice from the end of the last inlined declaration so the
+                // whitespace before the export statement is consumed too.
+                const spliceFrom = Math.max(
+                  ...inlinable.map(({ declaration: d }) => d.statement.range[1])
+                );
+
+                return [
+                  ...inlinable.map(
+                    ({ declaration: d }) => fixer.insertTextBefore(d.statement, 'export ')
+                  ),
+                  fixer.removeRange([spliceFrom, exportStatement.range[1]])
+                ];
+              }
             });
           }
         }
