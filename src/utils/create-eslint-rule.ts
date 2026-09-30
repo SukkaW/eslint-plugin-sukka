@@ -44,7 +44,12 @@ export function createRule<
     create(context) {
       const options = resolveOptions?.(...context.options) ?? (context.options[0] as TResolvedOptions);
       const listener = Object.entries(create(context, options));
-      return Object.fromEntries(listener.filter((pair) => pair[1]));
+      return listener.reduce<TSESLint.RuleListener>((listeners, [selector, handler]) => {
+        if (handler) {
+          listeners[selector] = handler;
+        }
+        return listeners;
+      }, {});
     }
   } satisfies ExportedRuleModule<TOptions, TMessageIDs>;
 }
