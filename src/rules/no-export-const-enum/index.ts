@@ -1,7 +1,5 @@
 import { createRule } from '@/utils/create-eslint-rule';
-import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import { ASTUtils } from '@typescript-eslint/utils';
-import type { TSESTree } from '@typescript-eslint/types';
+import { collectEnumExports } from '@/utils/enum';
 
 export default createRule({
   name: 'no-export-const-enum',
@@ -9,54 +7,26 @@ export default createRule({
     type: 'suggestion',
     docs: {
       description:
-        'Disallow using `const enum` expression as it can not be inlined and tree-shaken by swc/esbuild/babel/webpack/rollup/vite/bun/rspack'
+        'Disallow using `export const enum` expression as cross-module `const enum` can not be inlined and tree-shaken by swc/esbuild/babel/webpack/rollup/vite/bun/rspack'
     },
     messages: {
-      noConstEnum: 'Do not use `const enum` expression'
+      noConstEnum: 'Do not use `export const enum` expression as cross-module `const enum` can not be inlined and tree-shaken by swc/esbuild/babel/webpack/rollup/vite/bun/rspack'
     },
     schema: []
   },
 
   create(context) {
-    const reportTsEnumDeclarationInExportDeclaration = (
-      node: TSESTree.ExportDefaultDeclaration | TSESTree.ExportNamedDeclaration,
-      id: TSESTree.Identifier
-    ) => {
-      const variable = ASTUtils.findVariable(
-        context.sourceCode.getScope(node),
-        id
-      );
-      variable?.defs.forEach((def) => {
-        if (def.node.type === AST_NODE_TYPES.TSEnumDeclaration && def.node.const) {
-          context.report({
-            node,
-            messageId: 'noConstEnum'
-          });
-        }
-      });
-    };
-
+    let hasConstEnum = false;
     return {
-      ExportNamedDeclaration(node) {
-        const decl = node.declaration;
-        if (decl?.type === AST_NODE_TYPES.TSEnumDeclaration && decl.const) {
-          context.report({
-            node,
-            messageId: 'noConstEnum'
-          });
-          return;
-        }
-        if (decl?.type === AST_NODE_TYPES.VariableDeclaration) {
-          const id = decl.declarations[0].id;
-          if (id.type === AST_NODE_TYPES.Identifier) {
-            reportTsEnumDeclarationInExportDeclaration(node, id);
-          }
-        }
+      TSEnumDeclaration(node) {
+        hasConstEnum ||= node.const;
       },
-      ExportDefaultDeclaration(node) {
-        const decl = node.declaration;
-        if (decl.type === AST_NODE_TYPES.Identifier) {
-          reportTsEnumDeclarationInExportDeclaration(node, decl);
+      'Program:exit': function (program) {
+        if (!hasConstEnum) return;
+        for (const [declaration, node] of collectEnumExports(context.sourceCode, program)) {
+          if (declaration.const) {
+            context.report({ node, messageId: 'noConstEnum' });
+          }
         }
       }
     };

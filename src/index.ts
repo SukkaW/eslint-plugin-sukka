@@ -23,6 +23,7 @@ import noUnusedCollection from './rules/no-unused-collection';
 import noUselessPlusplus from './rules/no-useless-plusplus';
 
 import no_export_const_enum from './rules/no-export-const-enum';
+import preferConstEnum from './rules/prefer-const-enum';
 import noForInIterable from './rules/no-for-in-iterable';
 import onlyAwaitThenable from './rules/only-await-thenable';
 import noUndefinedOptionalParameters from './rules/no-undefined-optional-parameters';
@@ -70,6 +71,7 @@ const plugin: ESLint.Plugin = {
         'sukka/no-empty-collection': 'warn',
         'sukka/no-equals-in-for-termination': 'error',
         'sukka/no-export-const-enum': 'error', // not tree-shakable by swc/babel/esbuild
+        'sukka/prefer-const-enum': 'error',
         'sukka/no-expression-empty-lines': 'error',
         'sukka/no-invariant-returns': 'error',
         'sukka/no-redundant-assignments': 'warn',
@@ -162,6 +164,7 @@ const plugin: ESLint.Plugin = {
     'no-unused-collection': noUnusedCollection,
     'no-useless-plusplus': noUselessPlusplus,
     'no-export-const-enum': no_export_const_enum,
+    'prefer-const-enum': preferConstEnum,
     'no-for-in-iterable': noForInIterable,
     'only-await-thenable': onlyAwaitThenable,
     'no-undefined-optional-parameters': noUndefinedOptionalParameters,
