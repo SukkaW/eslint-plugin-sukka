@@ -41,6 +41,7 @@ import preferFoxtsErrorUtil from './rules/prefer-foxts-error-util';
 import preferFoxtsArrayUtils from './rules/prefer-foxts-array-utils';
 import avoidStringStartsWithSingleChar from './rules/avoid-string-starts-with-single-char';
 import reactNoUseStateObject from './rules/react-no-use-state-object';
+import reactIconImportNaming from './rules/react-icon-import-naming';
 import noObjectCreateNonNull from './rules/no-object-create-non-null';
 import preferFoxtsObjectSize from './rules/prefer-foxts-object-size';
 import preferFoxtsCastArray from './rules/prefer-foxts-cast-array';
@@ -134,7 +135,8 @@ const plugin: ESLint.Plugin = {
         'sukka/jsx-shorthand-boolean': 'error',
         'sukka/jsx-shorthand-fragment': 'error',
         'sukka/react-prefer-destructuring-assignment': 'warn',
-        'sukka/react-no-use-state-object': 'warn'
+        'sukka/react-no-use-state-object': 'warn',
+        'sukka/react-icon-import-naming': 'error'
       }
     }
   },
@@ -180,6 +182,7 @@ const plugin: ESLint.Plugin = {
     'prefer-foxts-array-utils': preferFoxtsArrayUtils,
     'avoid-string-starts-with-single-char': avoidStringStartsWithSingleChar,
     'react-no-use-state-object': reactNoUseStateObject,
+    'react-icon-import-naming': reactIconImportNaming,
     'no-object-create-non-null': noObjectCreateNonNull,
     'prefer-foxts-object-size': preferFoxtsObjectSize,
     'prefer-foxts-cast-array': preferFoxtsCastArray,
