@@ -92,8 +92,7 @@ function getDeclaration(statement: TSESTree.ProgramStatement): Declaration | nul
     if (statement.kind !== 'const') return null;
 
     const [declarator] = statement.declarations;
-    if (declarator.id.type !== AST_NODE_TYPES.Identifier) return null;
-    if (declarator.init == null) return null;
+    if ((declarator.id.type !== AST_NODE_TYPES.Identifier) || (declarator.init == null)) return null;
 
     return {
       statement,
@@ -260,8 +259,7 @@ export default createRule({
           if (next == null) continue;
 
           const variable = getVariable(sourceCode, declaration);
-          if (isReassigned(variable)) continue;
-          if (isOverloadImplementation(variable, declaration)) continue;
+          if (isReassigned(variable) || isOverloadImplementation(variable, declaration)) continue;
 
           if (next.type === AST_NODE_TYPES.ExportDefaultDeclaration) {
             const exported = next.declaration;
@@ -304,9 +302,7 @@ export default createRule({
               if (wrapper == null || !options.wrappers.has(wrapper)) continue;
 
               const [first] = exported.arguments as Array<TSESTree.CallExpressionArgument | undefined>;
-              if (first?.type !== AST_NODE_TYPES.Identifier || first.name !== declaration.name) continue;
-              if (hasOtherReferences(variable, first)) continue;
-              if (hasCommentsBetween(sourceCode, statement, next)) continue;
+              if (first?.type !== AST_NODE_TYPES.Identifier || first.name !== declaration.name || hasOtherReferences(variable, first) || hasCommentsBetween(sourceCode, statement, next)) continue;
 
               const declarationText = sourceCode.getText(statement);
 
@@ -374,9 +370,7 @@ export default createRule({
             if (declaration == null) continue;
             // Only top-level declarations can carry `export`.
             if (!body.includes(declaration.statement)) continue;
-            if (declaration.name !== specifier.local.name) continue;
-            if (isReassigned(variable)) continue;
-            if (isOverloadImplementation(variable, declaration)) continue;
+            if ((declaration.name !== specifier.local.name) || isReassigned(variable) || isOverloadImplementation(variable, declaration)) continue;
             // A second `export { Comp }` elsewhere would become a duplicate.
             if (isExportedMoreThanOnce(variable, specifier)) continue;
             // The declaration has to precede the export, otherwise adding

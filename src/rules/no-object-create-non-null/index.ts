@@ -18,8 +18,7 @@ export default createRule({
   create(context) {
     return {
       CallExpression(node: TSESTree.CallExpression) {
-        if (node.callee.type !== AST_NODE_TYPES.MemberExpression) return;
-        if (!isGlobalMemberAccess(context.sourceCode, node.callee, 'Object', 'create')) return;
+        if ((node.callee.type !== AST_NODE_TYPES.MemberExpression) || !isGlobalMemberAccess(context.sourceCode, node.callee, 'Object', 'create')) return;
 
         // Object.create() with no argument throws at runtime anyway — still a mistake
         if (node.arguments.length === 0) {

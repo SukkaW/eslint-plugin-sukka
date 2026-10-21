@@ -64,7 +64,6 @@ export default createRule({
               {
                 messageId: 'suggestRemoveUndefined',
                 fix(fixer) {
-                  // eslint-disable-next-line sukka/unicorn/consistent-destructuring -- not necessary
                   if (call.arguments.length === 1) {
                     const openingParen = context.sourceCode.getTokenAfter(call.callee)! as TSESTree.Token;
                     const closingParen = context.sourceCode.getLastToken(call)! as TSESTree.Token;

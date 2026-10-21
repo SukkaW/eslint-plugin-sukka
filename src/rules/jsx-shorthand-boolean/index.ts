@@ -19,8 +19,7 @@ export default createRule({
   create: (context) => ({
     JSXAttribute(node) {
       const { value } = node;
-      if (value?.type !== AST_NODE_TYPES.JSXExpressionContainer) return;
-      if (value.expression.type !== AST_NODE_TYPES.Literal || value.expression.value !== true) return;
+      if ((value?.type !== AST_NODE_TYPES.JSXExpressionContainer) || value.expression.type !== AST_NODE_TYPES.Literal || value.expression.value !== true) return;
       context.report({
         node,
         messageId: 'omitBooleanValue',

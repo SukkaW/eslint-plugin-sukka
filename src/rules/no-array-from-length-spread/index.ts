@@ -16,17 +16,11 @@ function isArrayConstructorWithLength(node: TSESTree.Node): node is TSESTree.Cal
 function isArrayFromWithLengthArg(node: TSESTree.CallExpression) {
   const { callee } = node;
 
-  if (
-    callee.type !== AST_NODE_TYPES.MemberExpression
+  if (callee.type !== AST_NODE_TYPES.MemberExpression
     || callee.object.type !== AST_NODE_TYPES.Identifier
     || callee.object.name !== 'Array'
     || callee.property.type !== AST_NODE_TYPES.Identifier
-    || callee.property.name !== 'from'
-  ) {
-    return false;
-  }
-
-  if (node.arguments.length < 1) return false;
+    || callee.property.name !== 'from' || (node.arguments.length < 1)) return false;
 
   const firstArg = node.arguments[0];
 
@@ -46,12 +40,8 @@ const ARRAY_CHAINED_METHODS = new Set(['fill', 'map', 'flatMap', 'forEach', 'red
 function isChainedMethodOnArrayConstructor(node: TSESTree.CallExpression) {
   const { callee } = node;
 
-  if (callee.type !== AST_NODE_TYPES.MemberExpression) return false;
-
-  if (
-    callee.property.type !== AST_NODE_TYPES.Identifier
-    || !ARRAY_CHAINED_METHODS.has(callee.property.name)
-  ) {
+  if ((callee.type !== AST_NODE_TYPES.MemberExpression) || callee.property.type !== AST_NODE_TYPES.Identifier
+    || !ARRAY_CHAINED_METHODS.has(callee.property.name)) {
     return false;
   }
 

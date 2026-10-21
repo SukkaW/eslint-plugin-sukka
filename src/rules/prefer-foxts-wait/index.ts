@@ -46,8 +46,7 @@ function getManualDelayTimeout(executor: TSESTree.Node): TSESTree.Expression | n
   }
 
   const [first, second] = call.arguments;
-  if (first.type !== AST_NODE_TYPES.Identifier || first.name !== resolveName) return null;
-  if (second.type === AST_NODE_TYPES.SpreadElement) return null;
+  if (first.type !== AST_NODE_TYPES.Identifier || first.name !== resolveName || (second.type === AST_NODE_TYPES.SpreadElement)) return null;
 
   return second;
 }

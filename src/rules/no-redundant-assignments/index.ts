@@ -235,8 +235,7 @@ export default createRule({
       }
       const { scopes } = scopeManager;
       for (let i = 0, l = scopes.length; i < l; i++) {
-        const scope = scopes[i];
-        const { references, variables } = scope;
+        const { references, variables } = scopes[i];
         for (let j = 0, jl = references.length; j < jl; j++) {
           const ref = references[j];
           refByIdentifier.set(ref.identifier as TSESTree.Identifier, ref);

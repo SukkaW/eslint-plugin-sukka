@@ -98,10 +98,7 @@ function isExported(variable: TSESLint.Scope.Variable) {
 }
 
 function isUnusedCollection(variable: TSESLint.Scope.Variable) {
-  if (isExported(variable)) {
-    return false;
-  }
-  if (variable.references.length <= 1) {
+  if (isExported(variable) || (variable.references.length <= 1)) {
     return false;
   }
 

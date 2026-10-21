@@ -69,8 +69,7 @@ export default createRule({
         if (target == null || !isSimpleTarget(target)) return;
 
         const targetText = getText(target);
-        if (getText(passthroughBranch) !== targetText) return;
-        if (!isSingleElementArrayOf(arrayBranch, targetText, getText)) return;
+        if ((getText(passthroughBranch) !== targetText) || !isSingleElementArrayOf(arrayBranch, targetText, getText)) return;
 
         context.report({
           node,
@@ -84,8 +83,7 @@ export default createRule({
 
       // if (!Array.isArray(x)) { x = [x]; }  →  x = castArray(x);
       IfStatement(node) {
-        if (node.alternate != null) return;
-        if (node.test.type !== AST_NODE_TYPES.UnaryExpression || node.test.operator !== '!') return;
+        if ((node.alternate != null) || node.test.type !== AST_NODE_TYPES.UnaryExpression || node.test.operator !== '!') return;
 
         const target = getIsArrayArgument(context.sourceCode, node.test.argument);
         if (target == null || !isSimpleTarget(target)) return;
@@ -103,8 +101,7 @@ export default createRule({
 
         const { left, right } = statement.expression;
         const targetText = getText(target);
-        if (getText(left) !== targetText) return;
-        if (!isSingleElementArrayOf(right, targetText, getText)) return;
+        if ((getText(left) !== targetText) || !isSingleElementArrayOf(right, targetText, getText)) return;
 
         context.report({
           node,

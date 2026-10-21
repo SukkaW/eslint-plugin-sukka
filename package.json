@@ -40,22 +40,22 @@
   "author": "SukkaW <https://skk.moe>",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "@typescript-eslint/types": "^8.71.0",
-    "@typescript-eslint/utils": "^8.71.0",
+    "@typescript-eslint/types": "^8.72.0",
+    "@typescript-eslint/utils": "^8.72.0",
     "foxts": "^5.9.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@swc-node/register": "^1.12.1",
-    "@swc/core": "^1.16.13",
+    "@swc/core": "^1.16.18",
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.9.9",
-    "@typescript-eslint/rule-tester": "^8.71.0",
+    "@typescript-eslint/rule-tester": "^8.72.0",
     "bumpp": "^11.1.0",
     "bunchee": "^6.12.2",
-    "eslint": "^10.11.0",
-    "eslint-config-sukka": "^9.1.0",
-    "eslint-formatter-sukka": "^9.1.0",
+    "eslint": "^10.13.0",
+    "eslint-config-sukka": "^9.2.0",
+    "eslint-formatter-sukka": "^9.2.0",
     "mocha": "^12.0.3",
     "nyc": "^18.0.0",
     "ts-dedent": "^2.3.0",
@@ -65,5 +65,5 @@
     "eslint": ">=9.29.0",
     "typescript": "*"
   },
-  "packageManager": "pnpm@11.28.3"
+  "packageManager": "pnpm@11.28.6"
 }

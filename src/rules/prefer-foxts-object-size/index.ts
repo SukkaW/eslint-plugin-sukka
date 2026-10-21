@@ -100,9 +100,7 @@ export default createRule({
       const call = node.object;
       if (call.arguments.length !== 1) return null;
       const [arg] = call.arguments;
-      if (arg.type === AST_NODE_TYPES.SpreadElement) return null;
-
-      if (!isGlobalMemberAccess(context.sourceCode, call.callee, 'Object', 'keys')) return null;
+      if ((arg.type === AST_NODE_TYPES.SpreadElement) || !isGlobalMemberAccess(context.sourceCode, call.callee, 'Object', 'keys')) return null;
       return arg;
     }
 

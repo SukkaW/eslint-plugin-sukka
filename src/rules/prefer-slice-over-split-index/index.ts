@@ -48,9 +48,7 @@ function getSplitCall(
   const call = node.object;
   if (call.type !== AST_NODE_TYPES.CallExpression) return null;
   const callee = call.callee;
-  if (callee.type !== AST_NODE_TYPES.MemberExpression) return null;
-  if (ASTUtils.getPropertyName(callee, sourceCode.getScope(callee)) !== 'split') return null;
-  if (call.arguments.length === 0 || call.arguments.length > 2) return null;
+  if ((callee.type !== AST_NODE_TYPES.MemberExpression) || (ASTUtils.getPropertyName(callee, sourceCode.getScope(callee)) !== 'split') || call.arguments.length === 0 || call.arguments.length > 2) return null;
   const separatorValue = staticValue(call.arguments[0], sourceCode);
   return typeof separatorValue === 'string' ? { call, separatorValue } : null;
 }

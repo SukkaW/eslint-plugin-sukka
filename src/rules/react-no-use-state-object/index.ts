@@ -37,8 +37,7 @@ export default createRule<{ maxKeys?: number } | undefined, [{ maxKeys?: number 
 
     return {
       CallExpression(node: TSESTree.CallExpression) {
-        if (!isUseStateCall(node)) return;
-        if (node.arguments.length === 0) return;
+        if (!isUseStateCall(node) || (node.arguments.length === 0)) return;
 
         const arg = node.arguments[0];
         // useState(() => ({ ... })) — lazy initializer

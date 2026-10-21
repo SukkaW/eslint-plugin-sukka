@@ -39,9 +39,7 @@ export default createRule({
           reportSyntaxPreferred(node, 'Fragment');
           return;
         }
-        if (name.type !== AST_NODE_TYPES.JSXMemberExpression) return;
-        if (name.object.type !== AST_NODE_TYPES.JSXIdentifier || name.object.name !== 'React') return;
-        if (name.property.type !== AST_NODE_TYPES.JSXIdentifier || name.property.name !== 'Fragment') return;
+        if ((name.type !== AST_NODE_TYPES.JSXMemberExpression) || name.object.type !== AST_NODE_TYPES.JSXIdentifier || name.object.name !== 'React' || name.property.type !== AST_NODE_TYPES.JSXIdentifier || name.property.name !== 'Fragment') return;
         reportSyntaxPreferred(node, 'React.Fragment');
       }
     };
