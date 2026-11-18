@@ -36,8 +36,8 @@ runTest({
       isObjectEmpty(x);
     `,
     dedent`
-      import { keyLength } from 'foxts/property-count';
-      keyLength(x);
+      import { keysLength } from 'foxts/property-count';
+      keysLength(x);
     `
   ],
   invalid: [
@@ -102,38 +102,38 @@ runTest({
       errors: [{ messageId: 'preferIsObjectEmpty' }]
     },
 
-    // Non-emptiness comparison → keyLength, only the .length subexpr replaced
+    // Non-emptiness comparison → keysLength, only the .length subexpr replaced
     {
       code: 'Object.keys(x).length === 1',
-      output: 'import { keyLength } from \'foxts/property-count\';\nkeyLength(x) === 1',
+      output: 'import { keysLength } from \'foxts/property-count\';\nkeysLength(x) === 1',
       errors: [{ messageId: 'preferKeyLength' }]
     },
     {
       code: 'Object.keys(x).length > 5',
-      output: 'import { keyLength } from \'foxts/property-count\';\nkeyLength(x) > 5',
+      output: 'import { keysLength } from \'foxts/property-count\';\nkeysLength(x) > 5',
       errors: [{ messageId: 'preferKeyLength' }]
     },
-    // Comparison against a non-literal → keyLength
+    // Comparison against a non-literal → keysLength
     {
       code: 'Object.keys(x).length === y',
-      output: 'import { keyLength } from \'foxts/property-count\';\nkeyLength(x) === y',
+      output: 'import { keysLength } from \'foxts/property-count\';\nkeysLength(x) === y',
       errors: [{ messageId: 'preferKeyLength' }]
     },
     {
       code: 'Object.keys(x).length === arr.length',
-      output: 'import { keyLength } from \'foxts/property-count\';\nkeyLength(x) === arr.length',
+      output: 'import { keysLength } from \'foxts/property-count\';\nkeysLength(x) === arr.length',
       errors: [{ messageId: 'preferKeyLength' }]
     },
-    // Assignment / standalone usage → keyLength
+    // Assignment / standalone usage → keysLength
     {
       code: 'const n = Object.keys(x).length;',
-      output: 'import { keyLength } from \'foxts/property-count\';\nconst n = keyLength(x);',
+      output: 'import { keysLength } from \'foxts/property-count\';\nconst n = keysLength(x);',
       errors: [{ messageId: 'preferKeyLength' }]
     },
-    // Passed as argument → keyLength
+    // Passed as argument → keysLength
     {
       code: 'doStuff(Object.keys(x).length);',
-      output: 'import { keyLength } from \'foxts/property-count\';\ndoStuff(keyLength(x));',
+      output: 'import { keysLength } from \'foxts/property-count\';\ndoStuff(keysLength(x));',
       errors: [{ messageId: 'preferKeyLength' }]
     },
 
@@ -149,15 +149,15 @@ runTest({
       `,
       errors: [{ messageId: 'preferIsObjectEmpty' }]
     },
-    // Reuse existing keyLength import — no duplicate added
+    // Reuse existing keysLength import — no duplicate added
     {
       code: dedent`
-        import { keyLength } from 'foxts/property-count';
+        import { keysLength } from 'foxts/property-count';
         const n = Object.keys(x).length + 1;
       `,
       output: dedent`
-        import { keyLength } from 'foxts/property-count';
-        const n = keyLength(x) + 1;
+        import { keysLength } from 'foxts/property-count';
+        const n = keysLength(x) + 1;
       `,
       errors: [{ messageId: 'preferKeyLength' }]
     },
@@ -174,6 +174,17 @@ runTest({
         const empty = isObjectEmpty(x);
       `,
       errors: [{ messageId: 'preferIsObjectEmpty' }]
+    },
+    // `foxts/property-count` exports `keysLength`
+    {
+      code: 'const single = Object.keys(obj).length === 1;',
+      output: 'import { keysLength } from \'foxts/property-count\';\nconst single = keysLength(obj) === 1;',
+      errors: [{ messageId: 'preferKeyLength' }]
+    },
+    {
+      code: 'const count = Object.keys(obj).length;',
+      output: 'import { keysLength } from \'foxts/property-count\';\nconst count = keysLength(obj);',
+      errors: [{ messageId: 'preferKeyLength' }]
     }
   ]
 }, {}, false);

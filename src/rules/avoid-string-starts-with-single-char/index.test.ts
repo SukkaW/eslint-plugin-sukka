@@ -138,6 +138,29 @@ runTest({
       code: 'str?.startsWith("a") ?? true',
       output: null,
       errors: [{ messageId: 'default' }]
+    },
+    // The replacement is an equality expression, so it needs parens wherever
+    // the surrounding operator binds at least as tightly
+    {
+      code: 'const same = a.startsWith("x") === b.startsWith("y");',
+      output: 'const same = (a[0] === "x") === (b[0] === "y");',
+      errors: [{ messageId: 'default' }, { messageId: 'default' }]
+    },
+    {
+      code: 'const flag = !!a.startsWith("x");',
+      output: 'const flag = !(a[0] !== "x");',
+      errors: [{ messageId: 'default' }]
+    },
+    {
+      code: 'const num = +a.startsWith("x");',
+      output: 'const num = +(a[0] === "x");',
+      errors: [{ messageId: 'default' }]
+    },
+    // A type assertion receiver needs parens before it can be indexed
+    {
+      code: 'const typed = (x as string).startsWith("x");',
+      output: 'const typed = (x as string)[0] === "x";',
+      errors: [{ messageId: 'default' }]
     }
   ]
 }, {}, false);

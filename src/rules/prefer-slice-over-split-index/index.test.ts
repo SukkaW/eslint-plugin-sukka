@@ -47,23 +47,23 @@ runTest({
     },
     {
       code: 'const third = s.split(",")[2];',
-      output: 'import { prefer_splitNth } from \'foxts/split-nth\';\nconst third = prefer_splitNth(s, ",", 2);',
-      errors: [{ messageId: 'preferprefer_splitNth' }]
+      output: 'import { splitNth } from \'foxts/split-nth\';\nconst third = splitNth(s, ",", 2);',
+      errors: [{ messageId: 'prefer_splitNth' }]
     },
     {
       code: 'const sixth = s.split(".")[5];',
-      output: 'import { prefer_splitNth } from \'foxts/split-nth\';\nconst sixth = prefer_splitNth(s, ".", 5);',
-      errors: [{ messageId: 'preferprefer_splitNth' }]
+      output: 'import { splitNth } from \'foxts/split-nth\';\nconst sixth = splitNth(s, ".", 5);',
+      errors: [{ messageId: 'prefer_splitNth' }]
     },
     {
       code: 'const secondCharacter = s.split("")[1];',
-      output: 'import { prefer_splitNth } from \'foxts/split-nth\';\nconst secondCharacter = prefer_splitNth(s, "", 1);',
-      errors: [{ messageId: 'preferprefer_splitNth' }]
+      output: 'import { splitNth } from \'foxts/split-nth\';\nconst secondCharacter = splitNth(s, "", 1);',
+      errors: [{ messageId: 'prefer_splitNth' }]
     },
     {
       code: 'const firstCharacter = s.split("")[0];',
-      output: 'import { prefer_splitNth } from \'foxts/split-nth\';\nconst firstCharacter = prefer_splitNth(s, "", 0);',
-      errors: [{ messageId: 'preferprefer_splitNth' }]
+      output: 'import { splitNth } from \'foxts/split-nth\';\nconst firstCharacter = splitNth(s, "", 0);',
+      errors: [{ messageId: 'prefer_splitNth' }]
     },
     {
       code: 'const tail = s.split("😀")[1];',
@@ -106,8 +106,8 @@ runTest({
       errors: [{ messageId: 'prefer_split1st' }]
     },
     {
-      code: 'import { prefer_splitNth } from \'foxts/split-nth\';\nconst head = s.split(":")[0];',
-      output: 'import { prefer_splitNth, split0th } from \'foxts/split-nth\';\nconst head = split0th(s, ":");',
+      code: 'import { splitNth } from \'foxts/split-nth\';\nconst head = s.split(":")[0];',
+      output: 'import { splitNth, split0th } from \'foxts/split-nth\';\nconst head = split0th(s, ":");',
       errors: [{ messageId: 'prefer_split0th' }]
     },
     {
@@ -122,11 +122,11 @@ runTest({
     },
     {
       code: 'const head = a.split(":")[0]; const tail = b.split(":")[1]; const third = c.split(":")[2];',
-      output: 'import { split0th, split1st, prefer_splitNth } from \'foxts/split-nth\';\nconst head = split0th(a, ":"); const tail = split1st(b, ":"); const third = prefer_splitNth(c, ":", 2);',
+      output: 'import { split0th, split1st, splitNth } from \'foxts/split-nth\';\nconst head = split0th(a, ":"); const tail = split1st(b, ":"); const third = splitNth(c, ":", 2);',
       errors: [
         { messageId: 'prefer_split0th' },
         { messageId: 'prefer_split1st' },
-        { messageId: 'preferprefer_splitNth' }
+        { messageId: 'prefer_splitNth' }
       ]
     },
     {
@@ -158,6 +158,15 @@ runTest({
       code: 'const split0th = () => {}; const head = s.split(":")[0];',
       output: null,
       errors: [{ messageId: 'prefer_split0th' }]
+    },
+    // `foxts/split-nth` exports `splitNth`
+    {
+      code: 'const third = s.split(",")[2];\nconst ch = s.split("")[0];',
+      output: 'import { splitNth } from \'foxts/split-nth\';\nconst third = splitNth(s, ",", 2);\nconst ch = splitNth(s, "", 0);',
+      errors: [
+        { messageId: 'prefer_splitNth' },
+        { messageId: 'prefer_splitNth' }
+      ]
     }
   ]
 }, {}, false);

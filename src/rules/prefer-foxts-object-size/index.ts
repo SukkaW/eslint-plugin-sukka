@@ -76,12 +76,12 @@ export default createRule({
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Disallow counting object properties via `Object.keys(x).length`, which allocates an intermediate array. Use `keyLength` from `foxts/property-count`, or `isObjectEmpty` from `foxts/is-object-empty` for emptiness checks.'
+      description: 'Disallow counting object properties via `Object.keys(x).length`, which allocates an intermediate array. Use `keysLength` from `foxts/property-count`, or `isObjectEmpty` from `foxts/is-object-empty` for emptiness checks.'
     },
     fixable: 'code',
     messages: {
       preferIsObjectEmpty: 'Prefer `isObjectEmpty` from `foxts/is-object-empty` over an `Object.keys(x).length` emptiness check.',
-      preferKeyLength: 'Prefer `keyLength` from `foxts/property-count` over `Object.keys(x).length`, which allocates an intermediate array just to count.'
+      preferKeyLength: 'Prefer `keysLength` from `foxts/property-count` over `Object.keys(x).length`, which allocates an intermediate array just to count.'
     },
     schema: []
   },
@@ -143,13 +143,13 @@ export default createRule({
           return;
         }
 
-        // Any other use of the count → keyLength(x), replacing only the `.length` expression
+        // Any other use of the count → keysLength(x), replacing only the `.length` expression
         context.report({
           node,
           messageId: 'preferKeyLength',
           *fix(fixer) {
-            yield *ensureNamedImport(fixer, context.sourceCode, KEY_LENGTH_SOURCE, 'keyLength');
-            yield fixer.replaceText(node, `keyLength(${argText(target)})`);
+            yield *ensureNamedImport(fixer, context.sourceCode, KEY_LENGTH_SOURCE, 'keysLength');
+            yield fixer.replaceText(node, `keysLength(${argText(target)})`);
           }
         });
       }

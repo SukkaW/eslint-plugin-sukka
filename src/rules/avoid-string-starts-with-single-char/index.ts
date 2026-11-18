@@ -1,6 +1,7 @@
 import { createRule } from '@/utils/create-eslint-rule';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
+import { ASTUtils } from '@typescript-eslint/utils';
 
 function isSingleCharStringLiteral(node: TSESTree.Node): node is TSESTree.Literal & { value: string } {
   return node.type === AST_NODE_TYPES.Literal
@@ -43,6 +44,36 @@ function isBooleanPosition(node: TSESTree.Node): boolean {
   }
 }
 
+// The rewrite is an equality expression, which binds looser than most operand
+// positions, so it is parenthesized everywhere but these known-safe parents.
+function parenthesizeForParent(node: TSESTree.Node, text: string): string {
+  const parent = node.parent;
+  if (parent == null) return text;
+  switch (parent.type) {
+    case AST_NODE_TYPES.ExpressionStatement:
+    case AST_NODE_TYPES.VariableDeclarator:
+    case AST_NODE_TYPES.ReturnStatement:
+    case AST_NODE_TYPES.ArrowFunctionExpression:
+    case AST_NODE_TYPES.IfStatement:
+    case AST_NODE_TYPES.WhileStatement:
+    case AST_NODE_TYPES.DoWhileStatement:
+    case AST_NODE_TYPES.ForStatement:
+    case AST_NODE_TYPES.ConditionalExpression:
+    case AST_NODE_TYPES.LogicalExpression:
+    case AST_NODE_TYPES.AssignmentExpression:
+    case AST_NODE_TYPES.Property:
+    case AST_NODE_TYPES.ArrayExpression:
+    case AST_NODE_TYPES.TemplateLiteral:
+    case AST_NODE_TYPES.JSXExpressionContainer:
+      return text;
+    case AST_NODE_TYPES.CallExpression:
+    case AST_NODE_TYPES.NewExpression:
+      return parent.callee === node ? `(${text})` : text;
+    default:
+      return `(${text})`;
+  }
+}
+
 export default createRule({
   name: 'avoid-string-starts-with-single-char',
   meta: {
@@ -67,12 +98,9 @@ export default createRule({
         const objectText = context.sourceCode.getText(callee.object);
         const charText = context.sourceCode.getText(arg);
 
-        const needsParens = callee.object.type === AST_NODE_TYPES.AwaitExpression
-          || callee.object.type === AST_NODE_TYPES.BinaryExpression
-          || callee.object.type === AST_NODE_TYPES.LogicalExpression
-          || callee.object.type === AST_NODE_TYPES.AssignmentExpression
-          || callee.object.type === AST_NODE_TYPES.SequenceExpression
-          || callee.object.type === AST_NODE_TYPES.ConditionalExpression;
+        // `.startsWith` and `[0]` bind equally tightly, so the receiver needs
+        // parentheses for indexing exactly when it already has them.
+        const needsParens = ASTUtils.isParenthesized(callee.object, context.sourceCode);
 
         // `str?.startsWith("c")` short-circuits on a nullish receiver, and
         // `str.startsWith?.("c")` guards a missing method. Both guards are lost
@@ -110,7 +138,7 @@ export default createRule({
               replacement: negatedReplacement,
               original: context.sourceCode.getText(negatedTarget)
             },
-            fix: fixable ? (fixer) => fixer.replaceText(negatedTarget, negatedReplacement) : null
+            fix: fixable ? (fixer) => fixer.replaceText(negatedTarget, parenthesizeForParent(negatedTarget, negatedReplacement)) : null
           });
           return;
         }
@@ -122,7 +150,7 @@ export default createRule({
             replacement,
             original: context.sourceCode.getText(self)
           },
-          fix: fixable ? (fixer) => fixer.replaceText(self, replacement) : null
+          fix: fixable ? (fixer) => fixer.replaceText(self, parenthesizeForParent(self, replacement)) : null
         });
       }
     };

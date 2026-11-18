@@ -116,6 +116,27 @@ runTest({
           appendArrayInPlace(arr, items);
       `,
       errors: [{ messageId: 'noSpreadInPush' }]
+    },
+    // The return value of `push()` is consumed, so it cannot be split into statements
+    {
+      code: dedent`
+        const arr = [1];
+        const len = arr.push(...[2, 3]);
+        console.log(len, arr);
+      `,
+      output: null,
+      errors: [{ messageId: 'noSpreadInPush' }]
+    },
+    {
+      code: 'cond && arr.push(...items);',
+      output: null,
+      errors: [{ messageId: 'noSpreadInPush' }]
+    },
+    // `appendArrayInPlace` only accepts an array, not an arbitrary iterable
+    {
+      code: 'arr.push(...new Set([2, 3]));',
+      output: null,
+      errors: [{ messageId: 'noSpreadInPush' }]
     }
   ]
 });
